@@ -1,0 +1,18 @@
+/* Color for the text within the sidebar */
+section[data-testid="stSidebar"] div.stRadio div,
+section[data-testid="stSidebar"] div[data-testid="stSidebarNav"] a span {
+    color: #5c1c74 !important;
+    background-color: #4ba8b6; /* Changez la couleur selon vos préférences */
+    border-color: #1b5738;
+}
+
+/* Text side bar and background side bar */
+section[data-testid="stSidebar"]>* {
+    background-color: #4ba8b6 !important;
+    color: #5c1c74 !important;
+}
+
+button {
+    color: #4ba8b6 !important;
+    background-color: #5c1c74 !important;
+}
