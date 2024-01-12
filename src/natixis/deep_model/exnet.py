@@ -6,7 +6,7 @@ import time
 import matplotlib.pyplot as plt
 import umap
 from sklearn.manifold import TSNE
-from .utils import logger
+from ..utils import logger
 
 
 class Gating(tf.keras.Model):
