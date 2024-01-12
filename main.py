@@ -14,7 +14,7 @@ seed = 0
 asset = "TEF"
 
 # Build params
-n_experts = 4
+n_experts = 10
 spec_weight = 7.7e-4
 entropy_weight = 4.2e-2
 expert_architecture = [32, 32]
@@ -24,8 +24,8 @@ weight_decay = {"l1": 0.0, "l2": 0.0}
 gamma = 2.5
 
 # Fit params
-n_epochs = 1
-patience = 1
+n_epochs = 5
+patience = 2
 batch_size = 1024
 learning_rate = 7.8e-4
 optimizer = "nadam"
@@ -34,7 +34,7 @@ lookahead = True
 # ===== Preparing data =====
 data = pd.read_csv("data/encoded_data.csv")
 ### TO REMOVE
-data = data.iloc[:10000]
+#data = data.iloc[:10000]
 ###
 active_investors = data["company_short_name"].unique()
 investor_mapping = dict(zip(active_investors, range(len(active_investors))))
@@ -105,7 +105,7 @@ model.fit(
     batch_size=batch_size,
     optimizer="nadam",
     learning_rate=learning_rate,
-    lookahead=True,
+    lookahead=False,
     patience=patience,
     seed=seed,
     save_path="models/",
