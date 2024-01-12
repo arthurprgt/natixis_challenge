@@ -33,10 +33,13 @@ lookahead = True
 
 # ===== Preparing data =====
 data = pd.read_csv("data/encoded_data.csv")
+### TO REMOVE
+data = data.iloc[:10000]
+###
 active_investors = data["company_short_name"].unique()
 investor_mapping = dict(zip(active_investors, range(len(active_investors))))
 
-data.loc[:, "investor_encoding"] = data["company_short_name"].apply(
+data["investor_encoding"] = data["company_short_name"].apply(
     lambda x: investor_mapping[x]
 )
 
@@ -51,31 +54,29 @@ train_idx, val_idx = train_test_split(train_idx, test_size=0.2, random_state=see
 # val_idx = data["val_idx"].values
 # test_idx = data["test_idx"].values
 
-features = list(
-    "B_Price" + data.columns[5:-1]
-)  # Removing irrelevant columns - date, encoding, target & splits.
+features = ["B_Price"] + list(data.columns[6:-1])
+# Removing irrelevant columns - date, encoding, target & splits.
 data = data[["Deal_Date", "investor_encoding", "buyer"] + features]
-data = data[features]
 
-train_data = data[train_idx]
-val_data = data[val_idx]
-test_data = data[test_idx]
+train_data = data.iloc[train_idx]
+val_data = data.iloc[val_idx]
+test_data = data.iloc[test_idx]
 
 train_data_ = (
     train_data[features].values.astype(np.float32),
-    train_data.investor_encoding.values.astype(np.int32),
+    train_data['investor_encoding'].values.astype(np.int32),
     pd.get_dummies(train_data.buyer).values.astype(np.float32),
 )
 
 val_data_ = (
     val_data[features].values.astype(np.float32),
-    val_data.investor_encoding.values.astype(np.int32),
+    val_data['investor_encoding'].values.astype(np.int32),
     pd.get_dummies(val_data.buyer).values.astype(np.float32),
 )
 
 test_data_ = (
     test_data[features].values.astype(np.float32),
-    test_data.investor_encoding.values.astype(np.int32),
+    test_data['investor_encoding'].values.astype(np.int32),
     pd.get_dummies(test_data.buyer).values.astype(np.float32),
 )
 
