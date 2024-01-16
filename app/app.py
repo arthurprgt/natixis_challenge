@@ -1,4 +1,6 @@
 import streamlit as st
+import pandas as pd
+from natixis.deep_model.prediction import predict
 
 # Initialize session state elements
 
@@ -59,10 +61,18 @@ def main():
     option = st.radio("Select functionality:", ("Recommend clients for an ISIN code", "Recommend bonds for a client"))
 
     if option == "Recommend clients for an ISIN code":
-        isin_code = st.text_input("Enter Natixis ISIN code:")
+        isin = st.text_input("Enter Natixis ISIN code:")
+        size = st.text_input("Enter bond size (in M€):")
+        b_side = st.radio("Choose Natixis side (buyer or seller):", ["Buyer", "Seller"], horizontal=True)
+        n_clients = st.select_slider("Select the number of clients you are looking for:", range(1, 11))
+        
         if st.button("Recommend clients"):
-            recommended_clients = None
-            st.write("Recommended clients:", recommended_clients)
+            recommended_clients, probabilities = predict(isin, b_side, n_clients)
+            results_df = pd.DataFrame({'Client': recommended_clients, 'Investment probability': probabilities*100})
+            results_df.index += 1
+            
+            st.dataframe(results_df, use_container_width=True)
+    
     elif option == "Recommend bonds for a client":
         client_name = st.text_input("Enter client name:")
         if st.button("Recommend bonds"):

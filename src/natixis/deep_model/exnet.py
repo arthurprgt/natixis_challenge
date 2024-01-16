@@ -300,6 +300,8 @@ class ExNet(tf.keras.Model):
                 self.opt = tf.optimizers.RMSprop(learning_rate=learning_rate)
             elif optimizer == "radam":
                 self.opt = tfa.optimizers.RectifiedAdam(learning_rate=learning_rate)
+            elif optimizer == 'sgd':
+                self.opt = tf.optimizers.SGD(learning_rate=learning_rate, nesterov=True, momentum=0.9)
             else:
                 raise ValueError(
                     "Optimizer not recognized. Try in {adam, nadam, radam, rmsprop}."
