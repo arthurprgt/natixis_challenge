@@ -1,5 +1,9 @@
-tensorflow==2.15.0.post1
+tensorflow==2.15.0
 tensorflow-addons==0.23.0
 scikit-learn
 pandas
 numpy
+matplotlib
+umap-learn
+joblib
+streamlit
