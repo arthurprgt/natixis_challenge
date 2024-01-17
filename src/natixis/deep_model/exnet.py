@@ -409,8 +409,9 @@ class ExNet(tf.keras.Model):
             # ===== Early stopping =====
             if val_loss < best_val_loss:
                 print(
-                    "Best val loss beaten, from {0:.5f} to {1:.5f}. Saving model.\n"
-                    .format(best_val_loss, val_loss)
+                    "Best val loss beaten, from {0:.5f} to {1:.5f}. Saving model.\n".format(
+                        best_val_loss, val_loss
+                    )
                 )
                 best_val_loss = val_loss
                 counter = 0
@@ -419,8 +420,9 @@ class ExNet(tf.keras.Model):
                 counter += 1
                 if counter == patience:
                     print(
-                        "{0} epochs performed without improvement. Stopping training.\n"
-                        .format(patience)
+                        "{0} epochs performed without improvement. Stopping training.\n".format(
+                            patience
+                        )
                     )
                     break
                 else:
@@ -469,8 +471,9 @@ class ExNet(tf.keras.Model):
 
         if print_stats:
             print(
-                "\nExpert frequency (rounded - may not exactly sum to 100%): {0}"
-                .format(class_frequency)
+                "\nExpert frequency (rounded - may not exactly sum to 100%): {0}".format(
+                    class_frequency
+                )
             )
 
             print("Mean expert attribution probability:")

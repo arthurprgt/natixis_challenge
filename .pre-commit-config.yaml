@@ -15,7 +15,6 @@ repos:
         entry: black
         types: [python]
         language: python
-        args : [--experimental-string-processing]
       - id: isort
         name: Sorting imports (isort)
         entry: isort
