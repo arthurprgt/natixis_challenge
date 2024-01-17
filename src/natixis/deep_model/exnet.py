@@ -8,6 +8,7 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_addons as tfa
 import umap
+import keras
 from sklearn.manifold import TSNE
 
 from ..utils import logger
@@ -46,13 +47,13 @@ class Gating(tf.keras.Model):
         self.n_experts = n_experts
         self.embedding_size = embedding_size
 
-        self.embedding = tf.keras.layers.Embedding(
+        self.embedding = keras.layers.Embedding(
             input_dim=n_investors,
             output_dim=embedding_size,
             embeddings_initializer="normal",
             name="embedding",
         )
-        self.experts_mapping = tf.keras.layers.Dense(
+        self.experts_mapping = keras.layers.Dense(
             units=n_experts,
             use_bias=False,
             activation=None,
@@ -120,25 +121,25 @@ class Expert(tf.keras.Model):
         self.dropout_rates = dropout_rates
         self.weight_decay = weight_decay
 
-        self.input_bn = tf.keras.layers.BatchNormalization(
+        self.input_bn = keras.layers.BatchNormalization(
             name="exp{0}_input_bn".format(expert_idx)
         )
-        self.input_drop = tf.keras.layers.Dropout(
+        self.input_drop = keras.layers.Dropout(
             rate=dropout_rates["input"], name="exp{0}_input_drop".format(expert_idx)
         )
 
         for layer_idx, layer_size in enumerate(self.architecture):
-            l = tf.keras.layers.Dense(
+            l = keras.layers.Dense(
                 units=layer_size,
                 activation=None,
                 kernel_initializer="he_normal",
-                kernel_regularizer=tf.keras.regularizers.l1_l2(**weight_decay),
+                kernel_regularizer=keras.regularizers.l1_l2(**weight_decay),
                 name=f"exp{0}_l{1}".format(expert_idx, layer_idx),
             )
-            bn = tf.keras.layers.BatchNormalization(
+            bn = keras.layers.BatchNormalization(
                 name=f"exp{0}_bn{1}".format(expert_idx, layer_idx)
             )
-            drop = tf.keras.layers.Dropout(
+            drop = keras.layers.Dropout(
                 rate=dropout_rates["hidden"],
                 name=f"exp{0}_drop{1}".format(expert_idx, layer_idx),
             )
@@ -146,10 +147,10 @@ class Expert(tf.keras.Model):
             setattr(self, f"exp{0}_bn{1}".format(expert_idx, layer_idx), bn)
             setattr(self, f"exp{0}_drop{1}".format(expert_idx, layer_idx), drop)
 
-        self.out = tf.keras.layers.Dense(
+        self.out = keras.layers.Dense(
             units=output_dim,
             activation=None,
-            kernel_regularizer=tf.keras.regularizers.l1_l2(**weight_decay),
+            kernel_regularizer=keras.regularizers.l1_l2(**weight_decay),
             name=f"exp{0}_output".format(expert_idx),
         )
 
@@ -382,15 +383,15 @@ class ExNet(tf.keras.Model):
 
         if self.opt is None:
             if optimizer == "adam":
-                self.opt = tf.optimizers.Adam(learning_rate=learning_rate)
+                self.opt = keras.optimizers.Adam(learning_rate=learning_rate)
             elif optimizer == "nadam":
-                self.opt = tf.optimizers.Nadam(learning_rate=learning_rate)
+                self.opt = keras.optimizers.Nadam(learning_rate=learning_rate)
             elif optimizer == "rmsprop":
-                self.opt = tf.optimizers.RMSprop(learning_rate=learning_rate)
+                self.opt = keras.optimizers.RMSprop(learning_rate=learning_rate)
             elif optimizer == "radam":
-                self.opt = tfa.optimizers.RectifiedAdam(learning_rate=learning_rate)
+                self.opt = kerasa.optimizers.RectifiedAdam(learning_rate=learning_rate)
             elif optimizer == "sgd":
-                self.opt = tf.optimizers.SGD(
+                self.opt = keras.optimizers.SGD(
                     learning_rate=learning_rate, nesterov=True, momentum=0.9
                 )
             else:
