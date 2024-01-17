@@ -1,10 +1,47 @@
+"""Implement the similar bond prediction model."""
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.preprocessing import StandardScaler
 
+PROCESSED_DATA_PATH = "data/preprocessed_data.csv"
+COLS_TO_EXCLUDE = (
+    [
+        "Deal_Date",
+        "cusip",
+        "B_Side",
+        "Instrument",
+        "Sales_Name",
+        "Sales_Initial",
+        "company_short_name",
+        "Total_Requested_Volume",
+        "Total_Traded_Volume_Natixis",
+        "Total_Traded_Volume_Away",
+        "Total_Traded_Volume",
+        "cdcissuer",
+        "Tier",
+        "Year_dealdate",
+        "Month_dealdate",
+        "Day_dealdate",
+        "Days_to_Maturity",
+        "cdcissuerShortName",
+        "lb_Platform_2",
+        "Day_maturity",
+    ],
+)
+
 
 def complete_nan_values(df):
+    """Completes the NaN values in the given DataFrame by filling them with the mean values
+    based on the classification and year of the deal date.
+
+    Args:
+        df (DataFrame): The input DataFrame containing the bond data.
+
+    Returns:
+        DataFrame: The DataFrame with the NaN values filled.
+    """
     df_unique_isin = df.groupby("ISIN").first()
     columns = [
         "Classification",
@@ -69,6 +106,16 @@ def complete_nan_values(df):
 
 
 def preprocess_clustering(df, cols_to_exclude):
+    """
+    Preprocesses the input DataFrame for clustering.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+        cols_to_exclude (list): List of columns to exclude from the preprocessing.
+
+    Returns:
+        pd.DataFrame: The preprocessed DataFrame.
+    """
     # Drop the columns that we exclude
     df = df.drop(cols_to_exclude, axis=1, errors="ignore")
 
@@ -206,51 +253,58 @@ def preprocess_clustering(df, cols_to_exclude):
     return grouped_df
 
 
-# Load preprocessed data
-df_preprocessed = pd.read_csv("data/preprocessed_data.csv")
+def from_preprocessed_to_clustering(path, cols_to_exclude=COLS_TO_EXCLUDE):
+    """
+    Convert preprocessed data to clustering format.
 
-# Fill missing values in key financial columns
-df_filled = complete_nan_values(df_preprocessed)
+    Args:
+        path (str): The file path of the preprocessed data.
+        cols_to_exclude (list, optional): List of columns to
+        exclude from clustering. Defaults to a predefined list.
 
-# Featurize and group by ISIN number
-cols_to_exclude = [
-    "Deal_Date",
-    "cusip",
-    "B_Side",
-    "Instrument",
-    "Sales_Name",
-    "Sales_Initial",
-    "company_short_name",
-    "Total_Requested_Volume",
-    "Total_Traded_Volume_Natixis",
-    "Total_Traded_Volume_Away",
-    "Total_Traded_Volume",
-    "cdcissuer",
-    "Tier",
-    "Year_dealdate",
-    "Month_dealdate",
-    "Day_dealdate",
-    "Days_to_Maturity",
-    "cdcissuerShortName",
-    "lb_Platform_2",
-    "Day_maturity",
-]
-df_clustering = preprocess_clustering(df_filled, cols_to_exclude)
+    Returns:
+        tuple: A tuple containing two dataframes - the normalized
+        data and the filled clustering data.
+    """
+    # Load preprocessed data
+    df_preprocessed = pd.read_csv(path)
+    # Fill missing values in key financial columns
+    df_filled = complete_nan_values(df_preprocessed)
+    df_clustering = preprocess_clustering(df_filled, cols_to_exclude)
 
-# Fill missing values from the Rating feature
-df_clustering_filled = df_clustering.copy()
-df_clustering_filled["Rating_mean"] = df_clustering_filled["Rating_mean"].fillna(
-    df_clustering["Rating_mean"].median()
-)
+    # Fill missing values from the Rating feature
+    df_clustering_filled = df_clustering.copy()
+    df_clustering_filled["Rating_mean"] = df_clustering_filled["Rating_mean"].fillna(
+        df_clustering["Rating_mean"].median()
+    )
 
-# Normalize the data to prepare for distance calculations
-scaler = StandardScaler()
-df_normalized = df_clustering_filled.drop(columns=["ISIN_"])
-df_normalized = scaler.fit_transform(df_normalized)
+    # Normalize the data to prepare for distance calculations
+    scaler = StandardScaler()
+    df_normalized = df_clustering_filled.drop(columns=["ISIN_"])
+    df_normalized = scaler.fit_transform(df_normalized)
+    return df_normalized, df_clustering_filled
 
 
 # Calculate distances and output 5 recommended bonds
-def get_nearest_rows_with_proximity_scores(isin_string, n_reco=5):
+def get_nearest_rows_with_proximity_scores(
+    isin_string, n_reco=5, path=PROCESSED_DATA_PATH
+):
+    """
+    Returns the nearest rows to a given ISIN string along with their proximity scores.
+
+    Parameters:
+        isin_string (str): The ISIN string to find nearest rows for.
+        n_reco (int): The number of nearest rows to retrieve (default is 5).
+        path (str): The file path of the preprocessed data
+        (default is data/preprocessed_data.csv).
+
+    Returns:
+        nearest_rows (pandas.Series): The ISIN values of the nearest rows.
+        proximity_scores (numpy.ndarray): The proximity scores of the nearest rows.
+    """
+
+    df_normalized, df_clustering_filled = from_preprocessed_to_clustering(path=path)
+
     # Find the index of the given ISIN string in df_original
     index = df_clustering_filled[df_clustering_filled["ISIN_"] == isin_string].index[0]
 

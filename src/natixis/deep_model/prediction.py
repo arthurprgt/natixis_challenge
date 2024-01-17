@@ -1,26 +1,33 @@
+""" Prediction module for the ExNet model. """
+
 import numpy as np
 import pandas as pd
+import yaml
 
 from .exnet import ExNet
 
+SEED = 0
+
+with open("config/config.yml", "r", encoding="utf-8") as f:
+    config = yaml.safe_load(f)
+
 # Build params
-seed = 0
-n_experts = 5
-spec_weight = 7.7e-4
-entropy_weight = 4.2e-2
-expert_architecture = [32, 32]
-embedding_size = 32
-dropout_rates = {"input": 0.1, "hidden": 0.5}
-weight_decay = {"l1": 0.0, "l2": 0.0}
-gamma = 2.5
+N_EXPERTS = config["n_experts"]
+SPEC_WEIGHT = config["spec_weight"]
+ENTROPY_WEIGHT = config["entropy_weight"]
+EXPERT_ARCHITECTURE = config["expert_architecture"]
+EMBEDDING_SIZE = config["embedding_size"]
+DROPOUT_RATES = config["dropout_rates"]
+WEIGHT_DECAY = config["weight_decay"]
+GAMMA = config["gamma"]
 
 # Fit params
-n_epochs = 400
-patience = 20
-batch_size = 1024
-learning_rate = 7.8e-4
-optimizer = "nadam"
-lookahead = True
+N_EPOCHS = config["n_epochs"]
+PATIENCE = config["patience"]
+BATCH_SIZE = config["batch_size"]
+LEARNING_RATE = config["learning_rate"]
+OPTIMIZER = config["optimizer"]
+LOOKAHEAD = config["lookahead"]
 
 # ===== Preparing data =====
 data = pd.read_csv("data/new_dataset.csv")
@@ -41,15 +48,15 @@ features = list(data.columns[4:-1])
 model = ExNet(
     n_feats=len(features),
     output_dim=3,
-    n_experts=n_experts,
-    expert_architecture=expert_architecture,
+    n_experts=N_EXPERTS,
+    expert_architecture=EXPERT_ARCHITECTURE,
     n_investors=n_investors,
-    embedding_size=embedding_size,
-    dropout_rates=dropout_rates,
+    embedding_size=EMBEDDING_SIZE,
+    dropout_rates=DROPOUT_RATES,
     weight_decay={"l1": 0.0, "l2": 0.0},
-    spec_weight=spec_weight,
-    entropy_weight=entropy_weight,
-    gamma=gamma,
+    spec_weight=SPEC_WEIGHT,
+    entropy_weight=ENTROPY_WEIGHT,
+    gamma=GAMMA,
     name=f"exnet",
 )
 
