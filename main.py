@@ -29,7 +29,9 @@ data = pd.read_csv("data/new_dataset.csv")
 active_investors = data["company_short_name"].unique()
 investor_mapping = dict(zip(active_investors, range(len(active_investors))))
 
-data["investor_encoding"] = data["company_short_name"].apply(lambda x: investor_mapping[x])
+data["investor_encoding"] = data["company_short_name"].apply(
+    lambda x: investor_mapping[x]
+)
 
 n_investors = np.unique(data.investor_encoding.values).shape[0]
 
@@ -66,7 +68,8 @@ test_data_ = (
 
 # ===== Training model =====
 print(
-    f"Training on {train_data_[0].shape[0]} samples, validating on {val_data_[0].shape[0]} samples."
+    f"Training on {train_data_[0].shape[0]} samples, validating on"
+    f" {val_data_[0].shape[0]} samples."
 )
 model = natixis.deep_model.ExNet(
     n_feats=len(features),
@@ -104,7 +107,8 @@ train_score = average_precision_score(train_data.Signal.values, train_pred)
 val_score = average_precision_score(val_data.Signal.values, val_pred)
 test_score = average_precision_score(test_data.Signal.values, test_pred)
 print(
-    f"train ap: {100*train_score:.2f} - val ap: {100*val_score:.2f} - test ap: {100*test_score:.2f}"
+    f"train ap: {100*train_score:.2f} - val ap: {100*val_score:.2f} - test ap:"
+    f" {100*test_score:.2f}"
 )
 
 _ = model.get_experts_repartition(print_stats=True)

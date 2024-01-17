@@ -28,7 +28,9 @@ active_investors = data["company_short_name"].unique()
 investor_mapping = dict(zip(active_investors, range(len(active_investors))))
 reverse_mapping = {v: k for k, v in investor_mapping.items()}
 
-data["investor_encoding"] = data["company_short_name"].apply(lambda x: investor_mapping[x])
+data["investor_encoding"] = data["company_short_name"].apply(
+    lambda x: investor_mapping[x]
+)
 
 n_investors = np.unique(data.investor_encoding.values).shape[0]
 

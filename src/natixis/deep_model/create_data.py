@@ -172,16 +172,20 @@ def encode_dataframe(df):
     df["Rating_Moodys_encoded"] = df["Rating_Moodys"].map(rating_mapping_moodys)
 
     # Create a unique Rating that averages the 3 Ratings
-    df["Rating"] = df[["Rating_Fitch_encoded", "Rating_SP_encoded", "Rating_Moodys_encoded"]].mean(
-        axis=1
+    df["Rating"] = df[
+        ["Rating_Fitch_encoded", "Rating_SP_encoded", "Rating_Moodys_encoded"]
+    ].mean(axis=1)
+    df.drop(
+        columns=["Rating_Fitch", "Rating_SP", "Rating_Moodys"], axis=1, inplace=True
     )
-    df.drop(columns=["Rating_Fitch", "Rating_SP", "Rating_Moodys"], axis=1, inplace=True)
 
     # List of countries to encode
     encode_countries = ["ITALY", "FRANCE", "GERMANY", "NETHERLANDS", "BELGIUM"]
 
     # Use the apply function with a lambda function to update the 'country'
-    df["Country"] = df["Country"].apply(lambda x: x if x in encode_countries else "Other")
+    df["Country"] = df["Country"].apply(
+        lambda x: x if x in encode_countries else "Other"
+    )
 
     # Delete unnecessary columns
     index_columns = ["Deal_Date", "ISIN", "company_short_name", "B_Side"]
@@ -233,7 +237,9 @@ def encode_dataframe(df):
     df_subset.dropna(subset=numerical_columns, inplace=True)
 
     # Drop unknown clients
-    df_subset = df_subset[~df_subset["company_short_name"].isin(["non renseigne", "non renouvele"])]
+    df_subset = df_subset[
+        ~df_subset["company_short_name"].isin(["non renseigne", "non renouvele"])
+    ]
 
     # Reset index
     df_subset = df_subset.reset_index(drop=True)
@@ -247,7 +253,9 @@ def encode_dataframe(df):
             previous_investors.add(row["company_short_name"])
 
             if row["Deal_Date"] > row_0["Deal_Date"] + pd.Timedelta(days=5):
-                not_interested = [x for x in previous_investors if x != row["company_short_name"]]
+                not_interested = [
+                    x for x in previous_investors if x != row["company_short_name"]
+                ]
                 random.shuffle(not_interested)
 
                 ### SEE HOW MANY NEGATIVE SIGNALS WE ADD - here 3
@@ -279,7 +287,9 @@ def encode_dataframe(df):
     df_final[numerical_columns] = scaler.fit_transform(df_final[numerical_columns])
 
     # Encode categorical columns
-    df_final = pd.get_dummies(df_final, columns=categorical_columns, drop_first=True, dtype=int)
+    df_final = pd.get_dummies(
+        df_final, columns=categorical_columns, drop_first=True, dtype=int
+    )
 
     return df_final
 

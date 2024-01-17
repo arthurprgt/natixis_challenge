@@ -134,7 +134,9 @@ class ExNet(tf.keras.Model):
         self.spec_weight = spec_weight
         self.entropy_weight = entropy_weight
         self.gamma = gamma
-        self.training = False  # Flag used for correct usage of BatchNorm at serving time.
+        self.training = (
+            False  # Flag used for correct usage of BatchNorm at serving time.
+        )
         self.epsilon = 1e-6
         self.opt = None
 
@@ -244,8 +246,12 @@ class ExNet(tf.keras.Model):
         mean = tf.tile(mean, [1, tf.shape(experts_tensor)[1], 1])
         centered = experts_tensor - mean
 
-        rev_std = tf.transpose(tf.math.rsqrt(tf.reduce_sum(centered**2, axis=1) + self.epsilon))
-        rev_std = tf.matmul(tf.expand_dims(rev_std, axis=2), tf.expand_dims(rev_std, axis=1))
+        rev_std = tf.transpose(
+            tf.math.rsqrt(tf.reduce_sum(centered**2, axis=1) + self.epsilon)
+        )
+        rev_std = tf.matmul(
+            tf.expand_dims(rev_std, axis=2), tf.expand_dims(rev_std, axis=1)
+        )
 
         centered = tf.transpose(centered, perm=[2, 1, 0])
         covar = tf.matmul(tf.transpose(centered, perm=[0, 2, 1]), centered)
@@ -265,7 +271,9 @@ class ExNet(tf.keras.Model):
     def focal_loss(self, y_true, y_pred):
         adaptive_weights = tf.math.pow(1 - y_pred + self.epsilon, self.gamma)
         return -tf.reduce_mean(
-            tf.reduce_sum(adaptive_weights * y_true * tf.math.log(y_pred + self.epsilon), axis=1)
+            tf.reduce_sum(
+                adaptive_weights * y_true * tf.math.log(y_pred + self.epsilon), axis=1
+            )
         )
 
     def fit(
@@ -299,10 +307,14 @@ class ExNet(tf.keras.Model):
                     learning_rate=learning_rate, nesterov=True, momentum=0.9
                 )
             else:
-                raise ValueError("Optimizer not recognized. Try in {adam, nadam, radam, rmsprop}.")
+                raise ValueError(
+                    "Optimizer not recognized. Try in {adam, nadam, radam, rmsprop}."
+                )
 
             if lookahead:
-                self.opt = tfa.optimizers.Lookahead(self.opt, sync_period=5, slow_step_size=0.5)
+                self.opt = tfa.optimizers.Lookahead(
+                    self.opt, sync_period=5, slow_step_size=0.5
+                )
 
         else:
             self.opt.learning_rate = learning_rate
@@ -310,7 +322,9 @@ class ExNet(tf.keras.Model):
         train_dataset = tf.data.Dataset.from_tensor_slices(train_data)
         train_dataset = train_dataset.shuffle(buffer_size=8192)
         train_dataset = train_dataset.batch(batch_size)
-        train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        train_dataset = train_dataset.prefetch(
+            buffer_size=tf.data.experimental.AUTOTUNE
+        )
 
         val_dataset = tf.data.Dataset.from_tensor_slices(val_data)
         val_dataset = val_dataset.batch(val_data[0].shape[0])
@@ -372,8 +386,8 @@ class ExNet(tf.keras.Model):
             epoch_duration = time.time() - epoch_duration
 
             print(
-                "Epoch {0}/{1} | {2:.2f}s | (train) loss: {3:.5f} - out loss: {4:.5f} - spec loss: {5:.5f} "
-                "- entropy loss: {6:.5f}".format(
+                "Epoch {0}/{1} | {2:.2f}s | (train) loss: {3:.5f} - out loss: {4:.5f} -"
+                " spec loss: {5:.5f} - entropy loss: {6:.5f}".format(
                     epoch + 1,
                     n_epochs,
                     epoch_duration,
@@ -384,7 +398,8 @@ class ExNet(tf.keras.Model):
                 )
             )
             print(
-                "(val) loss: {0:.5f} - out loss: {1:.5f} - spec loss: {2:.5f} - entropy loss: {3:.5f}".format(
+                "(val) loss: {0:.5f} - out loss: {1:.5f} - spec loss: {2:.5f} - entropy"
+                " loss: {3:.5f}".format(
                     val_loss, val_output_loss, val_spec_loss, val_entropy_loss
                 )
             )
@@ -392,9 +407,8 @@ class ExNet(tf.keras.Model):
             # ===== Early stopping =====
             if val_loss < best_val_loss:
                 print(
-                    "Best val loss beaten, from {0:.5f} to {1:.5f}. Saving model.\n".format(
-                        best_val_loss, val_loss
-                    )
+                    "Best val loss beaten, from {0:.5f} to {1:.5f}. Saving model.\n"
+                    .format(best_val_loss, val_loss)
                 )
                 best_val_loss = val_loss
                 counter = 0
@@ -403,16 +417,14 @@ class ExNet(tf.keras.Model):
                 counter += 1
                 if counter == patience:
                     print(
-                        "{0} epochs performed without improvement. Stopping training.\n".format(
-                            patience
-                        )
+                        "{0} epochs performed without improvement. Stopping training.\n"
+                        .format(patience)
                     )
                     break
                 else:
                     print(
-                        "{0}/{1} epochs performed without improvement. Best val loss: {2:.5f}\n".format(
-                            counter, patience, best_val_loss
-                        )
+                        "{0}/{1} epochs performed without improvement. Best val loss:"
+                        " {2:.5f}\n".format(counter, patience, best_val_loss)
                     )
 
         # Loading best weights.
@@ -455,9 +467,8 @@ class ExNet(tf.keras.Model):
 
         if print_stats:
             print(
-                "\nExpert frequency (rounded - may not exactly sum to 100%): {0}".format(
-                    class_frequency
-                )
+                "\nExpert frequency (rounded - may not exactly sum to 100%): {0}"
+                .format(class_frequency)
             )
 
             print("Mean expert attribution probability:")
@@ -466,7 +477,8 @@ class ExNet(tf.keras.Model):
                 # Only show 'relevant' experts.
                 if mean_probas[i] > 0.01:
                     print(
-                        "Expert {0} - mean proba {1:.2f}, n_allocated {2:d}, mean_allocated: {3:.2f}".format(
+                        "Expert {0} - mean proba {1:.2f}, n_allocated {2:d},"
+                        " mean_allocated: {3:.2f}".format(
                             i,
                             100 * mean_probas[i],
                             count_per_expert[i],
@@ -495,7 +507,10 @@ class ExNet(tf.keras.Model):
         reorder_dict = dict(
             zip(
                 [f"proba{i}" for i in range(self.n_experts)],
-                [probas[:, count_per_expert.expert.iloc[i]] for i in range(self.n_experts)],
+                [
+                    probas[:, count_per_expert.expert.iloc[i]]
+                    for i in range(self.n_experts)
+                ],
             )
         )
         reorder_dict["investor_idx"] = np.arange(self.gating.n_investors)
