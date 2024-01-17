@@ -1,0 +1,21 @@
+# Deep learning model configuration
+n_epochs : 400
+patience : 20
+batch_size : 1024
+learning_rate : 7.8e-4
+optimizer : "nadam"
+lookahead : True
+n_experts : 5
+spec_weight : 7.7e-4
+entropy_weight : 4.2e-2
+expert_architecture : [32, 32]
+embedding_size : 32
+dropout_rates : {"input": 0.1, "hidden": 0.5}
+weight_decay : {"l1": 0.0, "l2": 0.0}
+gamma : 2.5
+
+# Paths
+data_path: data
+enriched_dataset_name: new_dataset.csv
+model_folder: models
+model_name: exnet
