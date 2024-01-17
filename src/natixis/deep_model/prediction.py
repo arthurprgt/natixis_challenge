@@ -1,4 +1,3 @@
-import natixis
 import pandas as pd
 import numpy as np
 from .exnet import ExNet
@@ -54,17 +53,19 @@ model = ExNet(
 )
 
 model.fake_call()
-model.load_weights('models/exnet.h5')
+model.load_weights('models/exnet_big.h5')
 
 # ===== Prediction on given data =====
-def predict(isin, b_side, n_clients=5):
+def predict(isin, b_side, n_clients=5, size=None):
     # Get features
     infos = data.loc[data['ISIN'] == isin].iloc[-1]
+    # Change size info
+    infos.loc['Size'] = (int(size) * 1e6 - 51715757) / 247139467
     feats = (infos[features].values.astype(np.float32))
 
     # Create testing iteration
-    clients = np.arange(89, dtype='int32')
-    feats_copied = np.tile(feats, (89, 1))
+    clients = np.arange(87, dtype='int32')
+    feats_copied = np.tile(feats, (87, 1))
     to_pred = (feats_copied, clients)
     predictions = model.predict(to_pred)
 

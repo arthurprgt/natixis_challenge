@@ -58,6 +58,9 @@ def preprocess_dataframe(df):
     # Fix the error in the B_Price column
     df = df[df["B_Price"] >= 20]
 
+    # Create Size column
+    df['Size'] = df['B_Price'] * df['Total_Requested_Volume']
+
     # Replace NaT with null values in the 'Maturity' column
     #df["maturity"].replace({pd.NaT: np.nan}, inplace=True)
 
@@ -102,14 +105,91 @@ def preprocess_dataframe(df):
     return df
 
 def encode_dataframe(df):
+    # Ordinal encoding for 'Rating_Fitch'
+    rating_mapping = {
+        'AAA': 22,
+        'AA+': 21,
+        'AA': 20,
+        'AA-': 19,
+        'A+': 18,
+        'A': 17,
+        'A-': 16,
+        'BBB+': 15,
+        'BBB': 14,
+        'BBB-': 13,
+        'BB+': 12,
+        'BB': 11,
+        'BB-': 10,
+        'B+': 9,
+        'B': 8,
+        'B-': 7,
+        'CCC+': 6,
+        'CCC': 5,
+        'CCC-': 4,
+        'CC': 3,
+        'C': 2,
+        'WD': 1,
+        'D': 0,
+        'NR': np.nan
+    }
+
+    rating_mapping_moodys = {
+        'Aaa': 22,
+        'Aa1': 21,
+        'Aa2': 20,
+        '(P)Aa2': 20,
+        'Aa3': 19,
+        '(P)Aa3': 19,
+        'A1': 18,
+        '(P)A1': 18,
+        'A2': 17,
+        '(P)A2': 17,
+        'A3': 16,
+        '(P)A3': 16,
+        'Baa1': 15,
+        '(P)Baa1': 15,
+        'Baa2': 14,
+        '(P)Baa2': 14,
+        'Baa3': 13,
+        'Ba1': 12,
+        'Ba2': 11,
+        'Ba3': 10,
+        'B1': 9,
+        'B2': 8,
+        'B3': 7,
+        'Caa1': 6,
+        'Caa2': 5,
+        'Caa3': 4,
+        'Ca': 2.5,
+        'C': 0
+    }
+
+    df['Rating_Fitch_encoded'] = df['Rating_Fitch'].map(rating_mapping)
+    df['Rating_SP_encoded'] = df['Rating_SP'].map(rating_mapping)
+    df['Rating_Moodys_encoded'] = df['Rating_Moodys'].map(
+        rating_mapping_moodys
+        )
+
+    # Create a unique Rating that averages the 3 Ratings
+    df['Rating'] = df[['Rating_Fitch_encoded', 'Rating_SP_encoded',
+                       'Rating_Moodys_encoded']].mean(axis=1)
+    df.drop(columns=['Rating_Fitch', 'Rating_SP',
+                     'Rating_Moodys'], axis=1, inplace=True)
+
+    # List of countries to encode
+    encode_countries = ['ITALY', 'FRANCE', 'GERMANY', 'NETHERLANDS', 'BELGIUM']
+
+    # Use the apply function with a lambda function to update the 'country'
+    df['Country'] = df['Country'].apply(
+        lambda x: x if x in encode_countries else 'Other')
+    
     # Delete unnecessary columns
-    index_columns = ['Deal_Date', 'ISIN', 'company_short_name']
-    numerical_columns = ['B_Price', 'Coupon', 'MidPrice', 'MidYTM', 'MidASWSpread',
+    index_columns = ['Deal_Date', 'ISIN', 'company_short_name', 'B_Side']
+    numerical_columns = ['B_Price', 'Size', 'Coupon', 'MidPrice', 'MidYTM', 'MidASWSpread',
                         'MidZSpread', 'MidModifiedDuration', 'MidConvexity', 'MidEffectiveDuration',
-                        'MidEffectiveConvexity', 'Year_maturity', 'Days_to_Maturity']
-    categorical_columns = ['B_Side', 'BloomIndustrySector', 'BloomIndustryGroup', 'BloomIndustrySubGroup',
-                        'cdcissuerShortName', 'Country', 'lb_Platform_2', 'Rating_Fitch',
-                        'Rating_Moodys', 'Rating_SP', 'Ccy', 'Classification', 'Tier',
+                        'MidEffectiveConvexity', 'Year_maturity', 'Days_to_Maturity', 'Rating']
+    categorical_columns = ['BloomIndustrySector', 'BloomIndustryGroup', 'BloomIndustrySubGroup',
+                        'lb_Platform_2', 'Country', 'Ccy', 'Classification', 'Tier',
                         'Frequency', 'Type']
     features = index_columns + numerical_columns + categorical_columns
     df_subset = df[features]
@@ -120,15 +200,22 @@ def encode_dataframe(df):
     # Convert 'Deal_Date' to datetime format
     df_subset['Deal_Date'] = pd.to_datetime(df_subset['Deal_Date'])
 
-    # Add positive signal
-    df_subset['Signal'] = df_subset['B_Side']
+    # Correct issues in Ratings columns
+    #df_subset[['Rating_Moodys', 'Rating_SP']] = df_subset[['Rating_Moodys', 'Rating_SP']].replace('\(P\)', '', regex=True)
 
-    # Delete unknown values
-    df_subset.dropna(inplace=True)
+    # Add signal
+    df_subset['Signal'] = df_subset['B_Side']
+    df_subset.drop(columns=['B_Side'], inplace=True)
+
+    # Delete unknown values for numerical columns
+    df_subset.dropna(subset=numerical_columns, inplace=True)
+
+    # Drop unknown clients
+    df_subset = df_subset[~df_subset['company_short_name'].isin(['non renseigne', 'non renouvele'])]
 
     # Reset index
     df_subset = df_subset.reset_index(drop=True)
-    
+
     # Add negative signals
     row_0 = df_subset.iloc[0]
     previous_investors = set()
@@ -171,8 +258,8 @@ df = pd.read_csv("data/data.csv")
 
 # Creating and saving the preprocessed dataframe for EDA
 df_preprocessed = preprocess_dataframe(df)
-df_preprocessed.to_csv("data/preprocessed_data_final.csv", index=False)
+df_preprocessed.to_csv("data/preprocessed_data.csv", index=False)
 
 # Creating and saving the training data for the DL model
 df_encoded = encode_dataframe(df_preprocessed)
-df_encoded.to_csv("data/new_dataset_final.csv", index=False)
+df_encoded.to_csv("data/new_dataset.csv", index=False)

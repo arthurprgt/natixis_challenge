@@ -21,11 +21,11 @@ pip install -e .
 ```bash
 python src/natixis/deep_model/create_data.py
 ```
-3. To train the model run
-```bash
-python main.py
-```
-4. To run the app run
+3. To run the app run
 ```bash
 streamlit run app/app.py
+```
+4. To retrain the model run
+```bash
+python main.py
 ```
