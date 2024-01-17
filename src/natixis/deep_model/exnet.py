@@ -134,9 +134,7 @@ class ExNet(tf.keras.Model):
         self.spec_weight = spec_weight
         self.entropy_weight = entropy_weight
         self.gamma = gamma
-        self.training = (
-            False  # Flag used for correct usage of BatchNorm at serving time.
-        )
+        self.training = False  # Flag used for correct usage of BatchNorm at serving time.
         self.epsilon = 1e-6
         self.opt = None
 
@@ -246,12 +244,8 @@ class ExNet(tf.keras.Model):
         mean = tf.tile(mean, [1, tf.shape(experts_tensor)[1], 1])
         centered = experts_tensor - mean
 
-        rev_std = tf.transpose(
-            tf.math.rsqrt(tf.reduce_sum(centered**2, axis=1) + self.epsilon)
-        )
-        rev_std = tf.matmul(
-            tf.expand_dims(rev_std, axis=2), tf.expand_dims(rev_std, axis=1)
-        )
+        rev_std = tf.transpose(tf.math.rsqrt(tf.reduce_sum(centered**2, axis=1) + self.epsilon))
+        rev_std = tf.matmul(tf.expand_dims(rev_std, axis=2), tf.expand_dims(rev_std, axis=1))
 
         centered = tf.transpose(centered, perm=[2, 1, 0])
         covar = tf.matmul(tf.transpose(centered, perm=[0, 2, 1]), centered)
@@ -271,9 +265,7 @@ class ExNet(tf.keras.Model):
     def focal_loss(self, y_true, y_pred):
         adaptive_weights = tf.math.pow(1 - y_pred + self.epsilon, self.gamma)
         return -tf.reduce_mean(
-            tf.reduce_sum(
-                adaptive_weights * y_true * tf.math.log(y_pred + self.epsilon), axis=1
-            )
+            tf.reduce_sum(adaptive_weights * y_true * tf.math.log(y_pred + self.epsilon), axis=1)
         )
 
     def fit(
@@ -307,14 +299,10 @@ class ExNet(tf.keras.Model):
                     learning_rate=learning_rate, nesterov=True, momentum=0.9
                 )
             else:
-                raise ValueError(
-                    "Optimizer not recognized. Try in {adam, nadam, radam, rmsprop}."
-                )
+                raise ValueError("Optimizer not recognized. Try in {adam, nadam, radam, rmsprop}.")
 
             if lookahead:
-                self.opt = tfa.optimizers.Lookahead(
-                    self.opt, sync_period=5, slow_step_size=0.5
-                )
+                self.opt = tfa.optimizers.Lookahead(self.opt, sync_period=5, slow_step_size=0.5)
 
         else:
             self.opt.learning_rate = learning_rate
@@ -322,9 +310,7 @@ class ExNet(tf.keras.Model):
         train_dataset = tf.data.Dataset.from_tensor_slices(train_data)
         train_dataset = train_dataset.shuffle(buffer_size=8192)
         train_dataset = train_dataset.batch(batch_size)
-        train_dataset = train_dataset.prefetch(
-            buffer_size=tf.data.experimental.AUTOTUNE
-        )
+        train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
         val_dataset = tf.data.Dataset.from_tensor_slices(val_data)
         val_dataset = val_dataset.batch(val_data[0].shape[0])
@@ -509,10 +495,7 @@ class ExNet(tf.keras.Model):
         reorder_dict = dict(
             zip(
                 [f"proba{i}" for i in range(self.n_experts)],
-                [
-                    probas[:, count_per_expert.expert.iloc[i]]
-                    for i in range(self.n_experts)
-                ],
+                [probas[:, count_per_expert.expert.iloc[i]] for i in range(self.n_experts)],
             )
         )
         reorder_dict["investor_idx"] = np.arange(self.gating.n_investors)

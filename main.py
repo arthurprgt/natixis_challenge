@@ -29,9 +29,7 @@ data = pd.read_csv("data/new_dataset.csv")
 active_investors = data["company_short_name"].unique()
 investor_mapping = dict(zip(active_investors, range(len(active_investors))))
 
-data["investor_encoding"] = data["company_short_name"].apply(
-    lambda x: investor_mapping[x]
-)
+data["investor_encoding"] = data["company_short_name"].apply(lambda x: investor_mapping[x])
 
 n_investors = np.unique(data.investor_encoding.values).shape[0]
 

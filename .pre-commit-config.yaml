@@ -15,6 +15,7 @@ repos:
         entry: black
         types: [python]
         language: python
+        args : ["--line-length", "100"]
       - id: isort
         name: Sorting imports (isort)
         entry: isort

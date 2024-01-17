@@ -21,14 +21,10 @@ def complete_nan_values(df):
     ]
     df_by_classification = df_unique_isin[columns].copy()
     df_by_classification = (
-        df_by_classification.groupby(["Classification", "Year_dealdate"])
-        .mean()
-        .reset_index()
+        df_by_classification.groupby(["Classification", "Year_dealdate"]).mean().reset_index()
     )
 
-    df_group_by_industry = (
-        df_by_classification.groupby("Classification").mean().reset_index()
-    )
+    df_group_by_industry = df_by_classification.groupby("Classification").mean().reset_index()
     numeric_columns = [
         "SpreadvsBenchmarkMid",
         "MidASWSpread",
@@ -58,9 +54,7 @@ def complete_nan_values(df):
 
     for column in numeric_columns:
         df[column] = df[column].fillna(
-            df["additional_column"].map(
-                df_by_classification.set_index("additional_column")[column]
-            )
+            df["additional_column"].map(df_by_classification.set_index("additional_column")[column])
         )
 
     df.drop(columns=["additional_column"], inplace=True)
@@ -145,15 +139,13 @@ def preprocess_clustering(df, cols_to_exclude):
     df["Rating_SP_encoded"] = df["Rating_SP"].map(rating_mapping)
     df["Rating_Moodys_encoded"] = df["Rating_Moodys"].map(rating_mapping_moodys)
     # Create a unique Rating that averages the 3 Ratings and ignores missing values
-    df["Rating"] = df[
-        ["Rating_Fitch_encoded", "Rating_SP_encoded", "Rating_Moodys_encoded"]
-    ].mean(axis=1)
+    df["Rating"] = df[["Rating_Fitch_encoded", "Rating_SP_encoded", "Rating_Moodys_encoded"]].mean(
+        axis=1
+    )
 
     # Map values in 'Country' column
     valid_countries = ["FRANCE", "ITALY", "GERMANY", "NETHERLANDS", "SPAIN"]
-    df["Country"] = df["Country"].apply(
-        lambda x: x if x in valid_countries else "OTHER"
-    )
+    df["Country"] = df["Country"].apply(lambda x: x if x in valid_countries else "OTHER")
     # Perform one-hot encoding
     df = pd.get_dummies(df, columns=["Country"], prefix="is")
 
@@ -190,9 +182,7 @@ def preprocess_clustering(df, cols_to_exclude):
             ]
         }
     )
-    agg_dict.update(
-        {num_col: ["min", "max", "median"] for num_col in numerical_columns}
-    )
+    agg_dict.update({num_col: ["min", "max", "median"] for num_col in numerical_columns})
 
     # Grouping by 'ISIN' and aggregating columns
     grouped_df = df.groupby("ISIN").agg(agg_dict).reset_index()

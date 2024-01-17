@@ -81,9 +81,7 @@ def main():
         )
 
         if st.button("Recommend clients"):
-            recommended_clients, probabilities, viz_df = predict(
-                isin, b_side, n_clients, size
-            )
+            recommended_clients, probabilities, viz_df = predict(isin, b_side, n_clients, size)
             # Get clients
             results_df = pd.DataFrame(
                 {
@@ -119,16 +117,10 @@ def main():
             ["Buyer", "Seller"],
             horizontal=True,
         )
-        n_reco = st.select_slider(
-            "Select the number of bonds you are looking for:", range(1, 11)
-        )
+        n_reco = st.select_slider("Select the number of bonds you are looking for:", range(1, 11))
         if st.button("Recommend bonds"):
-            recommended_bonds, scores = get_nearest_rows_with_proximity_scores(
-                isin, n_reco
-            )
-            results_df = pd.DataFrame(
-                {"Bonds": recommended_bonds, "Proximity score": scores}
-            )
+            recommended_bonds, scores = get_nearest_rows_with_proximity_scores(isin, n_reco)
+            results_df = pd.DataFrame({"Bonds": recommended_bonds, "Proximity score": scores})
             results_df.reset_index(drop=True, inplace=True)
             results_df.index += 1
             st.dataframe(results_df, use_container_width=True)
