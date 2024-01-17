@@ -1,7 +1,9 @@
-import pandas as pd
-import numpy as np
 import random
+
+import numpy as np
+import pandas as pd
 from sklearn.preprocessing import StandardScaler
+
 
 def preprocess_dataframe(df):
     """
@@ -14,10 +16,10 @@ def preprocess_dataframe(df):
     6. Drops the unsused 'Cusip' column.
 
     Parameters:
-    - df (DataFrame): Input DataFrame.
+        df (DataFrame): Input DataFrame.
 
     Returns:
-    - DataFrame: Processed DataFrame.
+        DataFrame: Processed DataFrame.
     """
 
     df = df.copy()
@@ -59,10 +61,10 @@ def preprocess_dataframe(df):
     df = df[df["B_Price"] >= 20]
 
     # Create Size column
-    df['Size'] = df['B_Price'] * df['Total_Requested_Volume']
+    df["Size"] = df["B_Price"] * df["Total_Requested_Volume"]
 
     # Replace NaT with null values in the 'Maturity' column
-    #df["maturity"].replace({pd.NaT: np.nan}, inplace=True)
+    # df["maturity"].replace({pd.NaT: np.nan}, inplace=True)
 
     # Convert 'Deal_Date', 'maturity', 'AssumedMaturity', 'YTWDate' to datetime
     df["Deal_Date"] = pd.to_datetime(df["Deal_Date"])
@@ -104,114 +106,140 @@ def preprocess_dataframe(df):
 
     return df
 
+
 def encode_dataframe(df):
     # Ordinal encoding for 'Rating_Fitch'
     rating_mapping = {
-        'AAA': 22,
-        'AA+': 21,
-        'AA': 20,
-        'AA-': 19,
-        'A+': 18,
-        'A': 17,
-        'A-': 16,
-        'BBB+': 15,
-        'BBB': 14,
-        'BBB-': 13,
-        'BB+': 12,
-        'BB': 11,
-        'BB-': 10,
-        'B+': 9,
-        'B': 8,
-        'B-': 7,
-        'CCC+': 6,
-        'CCC': 5,
-        'CCC-': 4,
-        'CC': 3,
-        'C': 2,
-        'WD': 1,
-        'D': 0,
-        'NR': np.nan
+        "AAA": 22,
+        "AA+": 21,
+        "AA": 20,
+        "AA-": 19,
+        "A+": 18,
+        "A": 17,
+        "A-": 16,
+        "BBB+": 15,
+        "BBB": 14,
+        "BBB-": 13,
+        "BB+": 12,
+        "BB": 11,
+        "BB-": 10,
+        "B+": 9,
+        "B": 8,
+        "B-": 7,
+        "CCC+": 6,
+        "CCC": 5,
+        "CCC-": 4,
+        "CC": 3,
+        "C": 2,
+        "WD": 1,
+        "D": 0,
+        "NR": np.nan,
     }
 
     rating_mapping_moodys = {
-        'Aaa': 22,
-        'Aa1': 21,
-        'Aa2': 20,
-        '(P)Aa2': 20,
-        'Aa3': 19,
-        '(P)Aa3': 19,
-        'A1': 18,
-        '(P)A1': 18,
-        'A2': 17,
-        '(P)A2': 17,
-        'A3': 16,
-        '(P)A3': 16,
-        'Baa1': 15,
-        '(P)Baa1': 15,
-        'Baa2': 14,
-        '(P)Baa2': 14,
-        'Baa3': 13,
-        'Ba1': 12,
-        'Ba2': 11,
-        'Ba3': 10,
-        'B1': 9,
-        'B2': 8,
-        'B3': 7,
-        'Caa1': 6,
-        'Caa2': 5,
-        'Caa3': 4,
-        'Ca': 2.5,
-        'C': 0
+        "Aaa": 22,
+        "Aa1": 21,
+        "Aa2": 20,
+        "(P)Aa2": 20,
+        "Aa3": 19,
+        "(P)Aa3": 19,
+        "A1": 18,
+        "(P)A1": 18,
+        "A2": 17,
+        "(P)A2": 17,
+        "A3": 16,
+        "(P)A3": 16,
+        "Baa1": 15,
+        "(P)Baa1": 15,
+        "Baa2": 14,
+        "(P)Baa2": 14,
+        "Baa3": 13,
+        "Ba1": 12,
+        "Ba2": 11,
+        "Ba3": 10,
+        "B1": 9,
+        "B2": 8,
+        "B3": 7,
+        "Caa1": 6,
+        "Caa2": 5,
+        "Caa3": 4,
+        "Ca": 2.5,
+        "C": 0,
     }
 
-    df['Rating_Fitch_encoded'] = df['Rating_Fitch'].map(rating_mapping)
-    df['Rating_SP_encoded'] = df['Rating_SP'].map(rating_mapping)
-    df['Rating_Moodys_encoded'] = df['Rating_Moodys'].map(
-        rating_mapping_moodys
-        )
+    df["Rating_Fitch_encoded"] = df["Rating_Fitch"].map(rating_mapping)
+    df["Rating_SP_encoded"] = df["Rating_SP"].map(rating_mapping)
+    df["Rating_Moodys_encoded"] = df["Rating_Moodys"].map(rating_mapping_moodys)
 
     # Create a unique Rating that averages the 3 Ratings
-    df['Rating'] = df[['Rating_Fitch_encoded', 'Rating_SP_encoded',
-                       'Rating_Moodys_encoded']].mean(axis=1)
-    df.drop(columns=['Rating_Fitch', 'Rating_SP',
-                     'Rating_Moodys'], axis=1, inplace=True)
+    df["Rating"] = df[
+        ["Rating_Fitch_encoded", "Rating_SP_encoded", "Rating_Moodys_encoded"]
+    ].mean(axis=1)
+    df.drop(
+        columns=["Rating_Fitch", "Rating_SP", "Rating_Moodys"], axis=1, inplace=True
+    )
 
     # List of countries to encode
-    encode_countries = ['ITALY', 'FRANCE', 'GERMANY', 'NETHERLANDS', 'BELGIUM']
+    encode_countries = ["ITALY", "FRANCE", "GERMANY", "NETHERLANDS", "BELGIUM"]
 
     # Use the apply function with a lambda function to update the 'country'
-    df['Country'] = df['Country'].apply(
-        lambda x: x if x in encode_countries else 'Other')
-    
+    df["Country"] = df["Country"].apply(
+        lambda x: x if x in encode_countries else "Other"
+    )
+
     # Delete unnecessary columns
-    index_columns = ['Deal_Date', 'ISIN', 'company_short_name', 'B_Side']
-    numerical_columns = ['B_Price', 'Size', 'Coupon', 'MidPrice', 'MidYTM', 'MidASWSpread',
-                        'MidZSpread', 'MidModifiedDuration', 'MidConvexity', 'MidEffectiveDuration',
-                        'MidEffectiveConvexity', 'Year_maturity', 'Days_to_Maturity', 'Rating']
-    categorical_columns = ['BloomIndustrySector', 'BloomIndustryGroup', 'BloomIndustrySubGroup',
-                        'lb_Platform_2', 'Country', 'Ccy', 'Classification', 'Tier',
-                        'Frequency', 'Type']
+    index_columns = ["Deal_Date", "ISIN", "company_short_name", "B_Side"]
+    numerical_columns = [
+        "B_Price",
+        "Size",
+        "Coupon",
+        "MidPrice",
+        "MidYTM",
+        "MidASWSpread",
+        "MidZSpread",
+        "MidModifiedDuration",
+        "MidConvexity",
+        "MidEffectiveDuration",
+        "MidEffectiveConvexity",
+        "Year_maturity",
+        "Days_to_Maturity",
+        "Rating",
+    ]
+    categorical_columns = [
+        "BloomIndustrySector",
+        "BloomIndustryGroup",
+        "BloomIndustrySubGroup",
+        "lb_Platform_2",
+        "Country",
+        "Ccy",
+        "Classification",
+        "Tier",
+        "Frequency",
+        "Type",
+    ]
     features = index_columns + numerical_columns + categorical_columns
     df_subset = df[features]
 
     # Sort values
-    df_subset = df_subset.sort_values(by=['ISIN', 'Deal_Date'])
+    df_subset = df_subset.sort_values(by=["ISIN", "Deal_Date"])
 
     # Convert 'Deal_Date' to datetime format
-    df_subset['Deal_Date'] = pd.to_datetime(df_subset['Deal_Date'])
+    df_subset["Deal_Date"] = pd.to_datetime(df_subset["Deal_Date"])
 
     # Correct issues in Ratings columns
-    #df_subset[['Rating_Moodys', 'Rating_SP']] = df_subset[['Rating_Moodys', 'Rating_SP']].replace('\(P\)', '', regex=True)
+    # df_subset[['Rating_Moodys', 'Rating_SP']] = df_subset[['Rating_Moodys', 'Rating_SP']].replace('\(P\)', '', regex=True)
 
     # Add signal
-    df_subset['Signal'] = df_subset['B_Side']
-    df_subset.drop(columns=['B_Side'], inplace=True)
+    df_subset["Signal"] = df_subset["B_Side"]
+    df_subset.drop(columns=["B_Side"], inplace=True)
 
     # Delete unknown values for numerical columns
     df_subset.dropna(subset=numerical_columns, inplace=True)
 
     # Drop unknown clients
-    df_subset = df_subset[~df_subset['company_short_name'].isin(['non renseigne', 'non renouvele'])]
+    df_subset = df_subset[
+        ~df_subset["company_short_name"].isin(["non renseigne", "non renouvele"])
+    ]
 
     # Reset index
     df_subset = df_subset.reset_index(drop=True)
@@ -221,37 +249,50 @@ def encode_dataframe(df):
     previous_investors = set()
 
     for i, row in df_subset.iterrows():
-        if row['ISIN'] == row_0['ISIN']:
-            previous_investors.add(row['company_short_name'])
+        if row["ISIN"] == row_0["ISIN"]:
+            previous_investors.add(row["company_short_name"])
 
-            if row['Deal_Date'] > row_0['Deal_Date'] + pd.Timedelta(days=5):
-                not_interested = [x for x in previous_investors if x != row['company_short_name']]
+            if row["Deal_Date"] > row_0["Deal_Date"] + pd.Timedelta(days=5):
+                not_interested = [
+                    x for x in previous_investors if x != row["company_short_name"]
+                ]
                 random.shuffle(not_interested)
-                
+
                 ### SEE HOW MANY NEGATIVE SIGNALS WE ADD - here 3
                 for inv in not_interested[:3]:
                     df_subset.loc[len(df_subset)] = df_subset.loc[i].copy()
-                    df_subset.loc[len(df_subset) - 1, 'company_short_name'] = inv
-                    df_subset.loc[len(df_subset) - 1, 'Signal'] = 0
+                    df_subset.loc[len(df_subset) - 1, "company_short_name"] = inv
+                    df_subset.loc[len(df_subset) - 1, "Signal"] = 0
 
                 row_0 = row
 
         else:
-            print(str(list(df_subset.ISIN.unique()).index(row['ISIN'])) + "/" + str(len(df_subset.ISIN.unique())))
-            previous_investors = set([row['company_short_name']])
+            print(
+                str(list(df_subset.ISIN.unique()).index(row["ISIN"]))
+                + "/"
+                + str(len(df_subset.ISIN.unique()))
+            )
+            previous_investors = set([row["company_short_name"]])
             row_0 = row
-    
+
     # Reformat the dataframe
-    df_final = df_subset[["Deal_Date", "ISIN", "company_short_name", "Signal"] + numerical_columns + categorical_columns]
+    df_final = df_subset[
+        ["Deal_Date", "ISIN", "company_short_name", "Signal"]
+        + numerical_columns
+        + categorical_columns
+    ]
 
     # Standardize numerical columns
     scaler = StandardScaler()
     df_final[numerical_columns] = scaler.fit_transform(df_final[numerical_columns])
 
     # Encode categorical columns
-    df_final = pd.get_dummies(df_final, columns=categorical_columns, drop_first=True, dtype=int)
+    df_final = pd.get_dummies(
+        df_final, columns=categorical_columns, drop_first=True, dtype=int
+    )
 
     return df_final
+
 
 # Loading the data
 df = pd.read_csv("data/data.csv")

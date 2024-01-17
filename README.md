@@ -2,7 +2,7 @@
 
 Create virtual environment
 ```bash
-conda create --name natixis python=3.9 
+conda create --name natixis python=3.9
 conda activate natixis
 ```
 

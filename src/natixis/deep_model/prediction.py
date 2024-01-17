@@ -1,5 +1,6 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from .exnet import ExNet
 
 # Build params
@@ -53,31 +54,32 @@ model = ExNet(
 )
 
 model.fake_call()
-model.load_weights('models/exnet_big.h5')
+model.load_weights("models/exnet_big.h5")
+
 
 # ===== Prediction on given data =====
 def predict(isin, b_side, n_clients=5, size=None):
     # Get features
-    infos = data.loc[data['ISIN'] == isin].iloc[-1]
+    infos = data.loc[data["ISIN"] == isin].iloc[-1]
     # Change size info
-    infos.loc['Size'] = (int(size) * 1e6 - 51715757) / 247139467
-    feats = (infos[features].values.astype(np.float32))
+    infos.loc["Size"] = (int(size) * 1e6 - 51715757) / 247139467
+    feats = infos[features].values.astype(np.float32)
 
     # Create testing iteration
-    clients = np.arange(87, dtype='int32')
+    clients = np.arange(87, dtype="int32")
     feats_copied = np.tile(feats, (87, 1))
     to_pred = (feats_copied, clients)
     predictions = model.predict(to_pred)
 
     # Getting the top clients recommendation
-    if b_side=="Buyer":
+    if b_side == "Buyer":
         top_indices = np.argsort(predictions[:, 1])[-n_clients:][::-1]
         probabilities = np.round(predictions[top_indices, 1], 4)
-        viz_df = data[(data['ISIN'] == isin) & (data['Signal'] == 1)][-10:]
-    if b_side=="Seller":
+        viz_df = data[(data["ISIN"] == isin) & (data["Signal"] == 1)][-10:]
+    if b_side == "Seller":
         top_indices = np.argsort(predictions[:, 2])[-n_clients:][::-1]
         probabilities = np.round(predictions[top_indices, 2], 4)
-        viz_df = data[(data['ISIN'] == isin) & (data['Signal'] == 2)][-10:]
-    
+        viz_df = data[(data["ISIN"] == isin) & (data["Signal"] == 2)][-10:]
+
     top_clients = [reverse_mapping[index] for index in top_indices]
     return top_clients, probabilities, viz_df

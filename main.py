@@ -1,8 +1,9 @@
-from sklearn.metrics import average_precision_score
-import natixis
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sklearn.metrics import average_precision_score
 from sklearn.model_selection import train_test_split
+
+import natixis
 
 # Build params
 seed = 0
@@ -49,19 +50,19 @@ test_data = data.iloc[test_idx]
 
 train_data_ = (
     train_data[features].values.astype(np.float32),
-    train_data['investor_encoding'].values.astype(np.int32),
+    train_data["investor_encoding"].values.astype(np.int32),
     pd.get_dummies(train_data.Signal).values.astype(np.float32),
 )
 
 val_data_ = (
     val_data[features].values.astype(np.float32),
-    val_data['investor_encoding'].values.astype(np.int32),
+    val_data["investor_encoding"].values.astype(np.int32),
     pd.get_dummies(val_data.Signal).values.astype(np.float32),
 )
 
 test_data_ = (
     test_data[features].values.astype(np.float32),
-    test_data['investor_encoding'].values.astype(np.int32),
+    test_data["investor_encoding"].values.astype(np.int32),
     pd.get_dummies(test_data.Signal).values.astype(np.float32),
 )
 
