@@ -73,9 +73,11 @@ def predict(isin, b_side, n_clients=5, size=None):
     if b_side=="Buyer":
         top_indices = np.argsort(predictions[:, 1])[-n_clients:][::-1]
         probabilities = np.round(predictions[top_indices, 1], 4)
+        viz_df = data[(data['ISIN'] == isin) & (data['Signal'] == 1)][-10:]
     if b_side=="Seller":
         top_indices = np.argsort(predictions[:, 2])[-n_clients:][::-1]
         probabilities = np.round(predictions[top_indices, 2], 4)
+        viz_df = data[(data['ISIN'] == isin) & (data['Signal'] == 2)][-10:]
     
     top_clients = [reverse_mapping[index] for index in top_indices]
-    return top_clients, probabilities
+    return top_clients, probabilities, viz_df
