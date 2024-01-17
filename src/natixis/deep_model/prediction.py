@@ -2,9 +2,9 @@
 
 import numpy as np
 import pandas as pd
+import yaml
 
 from .exnet import ExNet
-import yaml
 
 SEED = 0
 

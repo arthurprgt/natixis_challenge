@@ -14,6 +14,32 @@ from ..utils import logger
 
 
 class Gating(tf.keras.Model):
+    """
+    Gating model for investor-expert interaction.
+
+    Args:
+        n_investors (int): Number of investors.
+        n_experts (int): Number of experts.
+        embedding_size (int): Size of the embedding vector.
+        name (str, optional): Name of the model. Defaults
+        to "gating".
+
+    Attributes:
+        n_investors (int): Number of investors.
+        n_experts (int): Number of experts.
+        embedding_size (int): Size of the embedding vector.
+        embedding (tf.keras.layers.Embedding): Embedding
+        layer for investor input.
+        experts_mapping (tf.keras.layers.Dense): Dense
+        layer for mapping embeddings to expert logits.
+
+    Methods:
+        call(gating_input): Forward pass of the gating model.
+
+    Returns:
+        tf.Tensor: Softmax probabilities of expert logits.
+    """
+
     def __init__(self, n_investors, n_experts, embedding_size, name="gating"):
         super().__init__(name=name)
         self.n_investors = n_investors
@@ -44,6 +70,41 @@ class Gating(tf.keras.Model):
 
 
 class Expert(tf.keras.Model):
+    """
+    Expert model for the Natixis challenge.
+
+    Args:
+        output_dim (int): The number of output dimensions.
+        expert_architecture (list): List of integers representing
+        the architecture of the expert model.
+        dropout_rates (dict): Dictionary specifying the dropout rates
+          for input and hidden layers. Defaults to {"input": 0.0, "hidden": 0.0}.
+        weight_decay (dict): Dictionary specifying the L1 and L2
+        weight decay values. Defaults to {"l1": 0.0, "l2": 0.0}.
+        expert_idx (int): Index of the expert model. Defaults to -1.
+        name (str): Name of the expert model. Defaults to "expert".
+
+    Attributes:
+        expert_idx (int): Index of the expert model.
+        architecture (list): List of integers representing the
+        architecture of the expert model.
+        dropout_rates (dict): Dictionary specifying the dropout
+        rates for input and hidden layers.
+        weight_decay (dict): Dictionary specifying the L1 and L2
+        weight decay values.
+        input_bn (tf.keras.layers.BatchNormalization): Batch
+        normalization layer for input.
+        input_drop (tf.keras.layers.Dropout): Dropout layer for input.
+        exp{expert_idx}_l{layer_idx} (tf.keras.layers.Dense): Dense
+        layer for each hidden layer.
+        exp{expert_idx}_bn{layer_idx} (tf.keras.layers.BatchNormalization):
+        Batch normalization layer for each hidden layer.
+        exp{expert_idx}_drop{layer_idx} (tf.keras.layers.Dropout):
+        Dropout layer for each hidden layer.
+        out (tf.keras.layers.Dense): Dense layer for output.
+
+    """
+
     def __init__(
         self,
         output_dim,
@@ -112,6 +173,30 @@ class Expert(tf.keras.Model):
 
 
 class ExNet(tf.keras.Model):
+    """
+    Initialize the ExNet model.
+
+    Args:
+        n_feats (int): Number of input features.
+        output_dim (int): Dimension of the output.
+        n_experts (int): Number of experts in the model.
+        expert_architecture (list): List of integers representing
+        the architecture of each expert.
+        n_investors (int): Number of investors in the gating block.
+        embedding_size (int): Size of the embedding for the gating block.
+        dropout_rates (dict, optional): Dictionary specifying the dropout
+        rates for input and hidden layers. Defaults to {"input": 0.0, "hidden": 0.0}.
+        weight_decay (dict, optional): Dictionary specifying the L1 and
+        L2 weight decay values. Defaults to {"l1": 0.0, "l2": 0.0}.
+        spec_weight (float, optional): Weight for the specific loss.
+        Defaults to 0.1.
+        entropy_weight (float, optional): Weight for the entropy loss.
+        Defaults to 0.1.
+        gamma (float, optional): Gamma value for the gating block.
+        Defaults to 2.0.
+        name (str, optional): Name of the model. Defaults to "ExNet_tf2".
+    """
+
     def __init__(
         self,
         n_feats,
