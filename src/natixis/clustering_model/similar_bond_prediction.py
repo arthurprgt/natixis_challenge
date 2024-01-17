@@ -5,6 +5,32 @@ import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.preprocessing import StandardScaler
 
+PROCESSED_DATA_PATH = "data/preprocessed_data.csv"
+COLS_TO_EXCLUDE = (
+    [
+        "Deal_Date",
+        "cusip",
+        "B_Side",
+        "Instrument",
+        "Sales_Name",
+        "Sales_Initial",
+        "company_short_name",
+        "Total_Requested_Volume",
+        "Total_Traded_Volume_Natixis",
+        "Total_Traded_Volume_Away",
+        "Total_Traded_Volume",
+        "cdcissuer",
+        "Tier",
+        "Year_dealdate",
+        "Month_dealdate",
+        "Day_dealdate",
+        "Days_to_Maturity",
+        "cdcissuerShortName",
+        "lb_Platform_2",
+        "Day_maturity",
+    ],
+)
+
 
 def complete_nan_values(df):
     """Completes the NaN values in the given DataFrame by filling them with the mean values
@@ -227,30 +253,7 @@ def preprocess_clustering(df, cols_to_exclude):
     return grouped_df
 
 
-def from_preprocessed_to_clustering(
-    path,
-    cols_to_exclude=[
-        "Deal_Date",
-        "cusip",
-        "B_Side",
-        "Instrument",
-        "Sales_Name",
-        "Sales_Initial",
-        "company_short_name",
-        "Total_Requested_Volume",
-        "Total_Traded_Volume_Natixis",
-        "Total_Traded_Volume_Away",
-        "Total_Traded_Volume",
-        "cdcissuer",
-        "Tier",
-        "Year_dealdate",
-        "Month_dealdate",
-        "Day_dealdate",
-        "Days_to_Maturity",
-        "cdcissuerShortName",
-        "lb_Platform_2",
-        "Day_maturity",
-    ],):
+def from_preprocessed_to_clustering(path, cols_to_exclude=COLS_TO_EXCLUDE):
     """
     Convert preprocessed data to clustering format.
 
@@ -283,8 +286,10 @@ def from_preprocessed_to_clustering(
 
 
 # Calculate distances and output 5 recommended bonds
-def get_nearest_rows_with_proximity_scores(isin_string, n_reco=5, path="data/preprocessed_data.csv"):
-    """"
+def get_nearest_rows_with_proximity_scores(
+    isin_string, n_reco=5, path=PROCESSED_DATA_PATH
+):
+    """
     Returns the nearest rows to a given ISIN string along with their proximity scores.
 
     Parameters:
@@ -296,7 +301,7 @@ def get_nearest_rows_with_proximity_scores(isin_string, n_reco=5, path="data/pre
     Returns:
         nearest_rows (pandas.Series): The ISIN values of the nearest rows.
         proximity_scores (numpy.ndarray): The proximity scores of the nearest rows.
-    """"
+    """
 
     df_normalized, df_clustering_filled = from_preprocessed_to_clustering(path=path)
 
