@@ -2,19 +2,19 @@
 
 import time
 
+import keras
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 import tensorflow_addons as tfa
 import umap
-import keras
 from sklearn.manifold import TSNE
 
 from ..utils import logger
 
 
-class Gating(tf.keras.Model):
+class Gating(keras.Model):
     """
     Gating model for investor-expert interaction.
 
@@ -29,9 +29,9 @@ class Gating(tf.keras.Model):
         n_investors (int): Number of investors.
         n_experts (int): Number of experts.
         embedding_size (int): Size of the embedding vector.
-        embedding (tf.keras.layers.Embedding): Embedding
+        embedding (keras.layers.Embedding): Embedding
         layer for investor input.
-        experts_mapping (tf.keras.layers.Dense): Dense
+        experts_mapping (keras.layers.Dense): Dense
         layer for mapping embeddings to expert logits.
 
     Methods:
@@ -63,14 +63,43 @@ class Gating(tf.keras.Model):
 
     @tf.function(experimental_relax_shapes=True)
     def call(self, gating_input):
+        """
+        Applies the deep model to the input data.
+
+        Args:
+            gating_input: The input data to be processed.
+
+        Returns:
+            The softmax output of the deep model.
+        """
         embedding = self.embedding(gating_input)
         embedding = tf.reshape(embedding, (tf.shape(embedding)[0], self.embedding_size))
 
         gating = self.experts_mapping(embedding)
         return tf.nn.softmax(logits=gating)
 
+    def get_config(self):
+        """
+        Returns the configuration of the ExNet model.
 
-class Expert(tf.keras.Model):
+        Returns:
+            dict: The configuration dictionary containing the values of `n_investors`, `n_experts`,
+                    `embedding_size`, `embedding`, and `experts_mapping`.
+        """
+        config = super().get_config().copy()
+        config.update(
+            {
+                "n_investors": self.n_investors,
+                "n_experts": self.n_experts,
+                "embedding_size": self.embedding_size,
+                "embedding": self.embedding,
+                "experts_mapping": self.experts_mapping,
+            }
+        )
+        return config
+
+
+class Expert(keras.Model):
     """
     Expert model for the Natixis challenge.
 
@@ -93,16 +122,16 @@ class Expert(tf.keras.Model):
         rates for input and hidden layers.
         weight_decay (dict): Dictionary specifying the L1 and L2
         weight decay values.
-        input_bn (tf.keras.layers.BatchNormalization): Batch
+        input_bn (keras.layers.BatchNormalization): Batch
         normalization layer for input.
-        input_drop (tf.keras.layers.Dropout): Dropout layer for input.
-        exp{expert_idx}_l{layer_idx} (tf.keras.layers.Dense): Dense
+        input_drop (keras.layers.Dropout): Dropout layer for input.
+        exp{expert_idx}_l{layer_idx} (keras.layers.Dense): Dense
         layer for each hidden layer.
-        exp{expert_idx}_bn{layer_idx} (tf.keras.layers.BatchNormalization):
+        exp{expert_idx}_bn{layer_idx} (keras.layers.BatchNormalization):
         Batch normalization layer for each hidden layer.
-        exp{expert_idx}_drop{layer_idx} (tf.keras.layers.Dropout):
+        exp{expert_idx}_drop{layer_idx} (keras.layers.Dropout):
         Dropout layer for each hidden layer.
-        out (tf.keras.layers.Dense): Dense layer for output.
+        out (keras.layers.Dense): Dense layer for output.
 
     """
 
@@ -156,6 +185,16 @@ class Expert(tf.keras.Model):
 
     @tf.function(experimental_relax_shapes=True)
     def call(self, expert_input, training=False):
+        """
+        Forward pass of the ExNet model.
+
+        Args:
+            expert_input: Input tensor to the model.
+            training: Boolean flag indicating whether the model is in training mode or not.
+
+        Returns:
+            out: Output tensor of the model after applying softmax activation.
+        """
         x = self.input_bn(expert_input, training=training)
         x = self.input_drop(x, training=training)
 
@@ -172,8 +211,16 @@ class Expert(tf.keras.Model):
         out = tf.nn.softmax(out)
         return out
 
+    def fake_call(self):
+        """
+        This method generates a fake input and calls the model with it.
+        """
+        fake_input = np.random.randn(1, 1).astype(np.float32)
+        self(fake_input)
+        pass
 
-class ExNet(tf.keras.Model):
+
+class ExNet(keras.Model):
     """
     Initialize the ExNet model.
 
@@ -247,6 +294,11 @@ class ExNet(tf.keras.Model):
             setattr(self, f"exp{0}".format(expert_idx), exp)
 
     def fake_call(self):
+        """This method generates fake input data and calls the model.
+
+        Returns:
+            None
+        """
         # To be able to save & load easily, we require a 'build' function that sets all
         # tensors.
         fake_expert = np.random.randn(1, self.n_feats).astype(np.float32)
@@ -255,6 +307,18 @@ class ExNet(tf.keras.Model):
 
     @tf.function(experimental_relax_shapes=True)
     def call(self, expert_input, gating_input):
+        """
+        Forward pass of the ExNet model.
+
+        Args:
+            expert_input: Input to the expert network.
+            gating_input: Input to the gating network.
+
+        Returns:
+            output: Output of the ExNet model.
+            exp_out: Output of each expert network.
+            gat_out: Output of the gating network.
+        """
         gat_out = self.gating(gating_input)
         gating = tf.transpose(gat_out)
         gating = tf.tile(tf.expand_dims(gating, axis=-1), [1, 1, self.output_dim])
@@ -274,6 +338,18 @@ class ExNet(tf.keras.Model):
 
     @tf.function(experimental_relax_shapes=True)
     def train_step(self, expert_input, gating_input, y_true):
+        """
+        Performs a single training step for the ExNet model.
+
+        Args:
+            expert_input: The input data for the expert network.
+            gating_input: The input data for the gating network.
+            y_true: The true labels for the input data.
+
+        Returns:
+            A tuple containing the loss values for the output, specialization, and entropy,
+            respectively.
+        """
         logger.info("Starting training")
         with tf.GradientTape() as tape:
             y_pred, exp_out, gat_out = self(expert_input, gating_input)
@@ -298,6 +374,17 @@ class ExNet(tf.keras.Model):
 
     @tf.function(experimental_relax_shapes=True)
     def test_step(self, expert_input, gating_input, y_true):
+        """
+        Perform a single testing step of the model.
+
+        Args:
+            expert_input (tf.Tensor): Input to the expert network.
+            gating_input (tf.Tensor): Input to the gating network.
+            y_true (tf.Tensor): True labels.
+
+        Returns:
+            Tuple[float, float, float, float]: A tuple containing the loss, output loss, specialization loss, and entropy loss.
+        """
         y_pred, exp_out, gat_out = self(expert_input, gating_input)
         output_loss = self.focal_loss(y_true, y_pred)
         if self.n_experts > 1:
@@ -317,6 +404,16 @@ class ExNet(tf.keras.Model):
 
     @tf.function(experimental_relax_shapes=True)
     def specialization_loss(self, experts_tensor):
+        """
+        Calculates the specialization loss for the deep model.
+
+        Args:
+            experts_tensor (tf.Tensor): Tensor containing the expert predictions.
+
+        Returns:
+            tf.Tensor: The specialization loss.
+
+        """
         # Cross-attribution weights of each expert.
         probas = self.gating(tf.range(self.gating.n_investors))
         mask = tf.cast(probas > 0, dtype=tf.float32)
@@ -351,12 +448,32 @@ class ExNet(tf.keras.Model):
 
     @tf.function(experimental_relax_shapes=True)
     def entropy_loss(self, gating_tensor):
+        """
+        Calculates the entropy loss for the given gating tensor.
+
+        Parameters:
+            gating_tensor (tf.Tensor): The gating tensor.
+
+        Returns:
+            tf.Tensor: The entropy loss.
+        """
         return -tf.reduce_mean(
             tf.multiply(gating_tensor, tf.math.log(gating_tensor + self.epsilon))
         )
 
     @tf.function(experimental_relax_shapes=True)
     def focal_loss(self, y_true, y_pred):
+        """
+        Compute the focal loss between the true labels and predicted probabilities.
+
+        Parameters:
+            y_true (tensor): True labels.
+            y_pred (tensor): Predicted probabilities.
+
+        Returns:
+            tensor: Focal loss value.
+        """
+
         adaptive_weights = tf.math.pow(1 - y_pred + self.epsilon, self.gamma)
         return -tf.reduce_mean(
             tf.reduce_sum(
@@ -377,6 +494,24 @@ class ExNet(tf.keras.Model):
         save_path="",
         seed=0,
     ):
+        """
+        Trains the model on the given training data and evaluates it on the validation data.
+
+        Args:
+            train_data: The training data, a tuple of (x_expert, x_gating, y).
+            val_data: The validation data, a tuple of (x_expert, x_gating, y).
+            n_epochs: The number of epochs to train the model (default: 10).
+            batch_size: The batch size for training (default: 32).
+            optimizer: The optimizer to use for training (default: "nadam").
+            learning_rate: The learning rate for the optimizer (default: 1e-3).
+            patience: The number of epochs to wait for improvement in validation loss before early stopping (default: 10).
+            lookahead: Whether to use Lookahead optimizer (default: True).
+            save_path: The path to save the trained model weights (default: "").
+            seed: The random seed for reproducibility (default: 0).
+
+        Returns:
+            history: A pandas DataFrame containing the training history.
+        """
         # For reproducibility of results.
         tf.random.set_seed(seed)
         np.random.seed(seed)
@@ -389,7 +524,7 @@ class ExNet(tf.keras.Model):
             elif optimizer == "rmsprop":
                 self.opt = keras.optimizers.RMSprop(learning_rate=learning_rate)
             elif optimizer == "radam":
-                self.opt = kerasa.optimizers.RectifiedAdam(learning_rate=learning_rate)
+                self.opt = keras.optimizers.RectifiedAdam(learning_rate=learning_rate)
             elif optimizer == "sgd":
                 self.opt = keras.optimizers.SGD(
                     learning_rate=learning_rate, nesterov=True, momentum=0.9
@@ -524,6 +659,17 @@ class ExNet(tf.keras.Model):
         return history
 
     def predict(self, pred_data, batch_size=-1):
+        """
+        Predicts the output for the given input data.
+
+        Args:
+            pred_data (numpy.ndarray): The input data for prediction.
+            batch_size (int, optional): The batch size for prediction. Defaults to -1.
+
+        Returns:
+            numpy.ndarray: The predicted output.
+        """
+
         self.training = False
         pred_dataset = tf.data.Dataset.from_tensor_slices(pred_data)
 
@@ -543,6 +689,17 @@ class ExNet(tf.keras.Model):
         return preds
 
     def get_experts_repartition(self, print_stats=True):
+        """
+        Calculates the repartition of experts based on their attribution probabilities.
+
+        Args:
+            print_stats (bool): Whether to print the statistics or not. Default is True.
+
+        Returns:
+            tuple: A tuple containing the attribution probabilities and the class frequency.
+
+        """
+
         probas = self.gating(tf.range(self.gating.n_investors)).numpy()
         dominant_experts = np.argmax(probas, axis=1)
         values, counts = np.unique(dominant_experts, return_counts=True)
@@ -582,6 +739,14 @@ class ExNet(tf.keras.Model):
         return probas, class_frequency
 
     def plot_experts_repartition(self):
+        """
+        Plots the distribution of experts for all investors.
+
+        Returns:
+            reorder_probas (pd.DataFrame): DataFrame containing the reordered probabilities of expert attribution.
+            count_per_expert (pd.DataFrame): DataFrame containing the count of experts for each expert index.
+            unattributed_experts (list): List of expert indices that are not attributed to any investor.
+        """
         probas = self.gating(tf.range(self.gating.n_investors)).numpy()
         classes = np.argmax(probas, axis=1)
         val, counts = np.unique(classes, return_counts=True)
@@ -636,6 +801,14 @@ class ExNet(tf.keras.Model):
         return reorder_probas, count_per_expert, unattributed_experts
 
     def plot_experts_umap(self, n_neighbors=10, min_dist=0.1):
+        """
+        Plots the UMAP visualization of the experts' embeddings.
+
+        Parameters:
+        - n_neighbors (int): Number of neighbors to consider for each point in the UMAP algorithm. Default is 10.
+        - min_dist (float): The effective minimum distance between embedded points. Default is 0.1.
+        """
+
         probas = self.gating(tf.range(self.gating.n_investors)).numpy()
         projector = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist)
         proj_probas = projector.fit_transform(probas)
@@ -655,6 +828,15 @@ class ExNet(tf.keras.Model):
     def plot_experts_tsne(
         self, perplexity=5, learning_rate=200.0, early_exaggeration=12.0, n_iter=1000
     ):
+        """
+        Plot t-SNE visualization of investor embeddings.
+
+        Parameters:
+        - perplexity: The perplexity parameter of t-SNE (default: 5).
+        - learning_rate: The learning rate parameter of t-SNE (default: 200.0).
+        - early_exaggeration: The early exaggeration parameter of t-SNE (default: 12.0).
+        - n_iter: The number of iterations for t-SNE (default: 1000).
+        """
         probas = self.gating(tf.range(self.gating.n_investors)).numpy()
         projector = TSNE(
             perplexity=perplexity,
