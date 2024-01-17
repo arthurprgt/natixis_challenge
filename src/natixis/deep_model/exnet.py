@@ -133,24 +133,24 @@ class Expert(tf.keras.Model):
                 activation=None,
                 kernel_initializer="he_normal",
                 kernel_regularizer=tf.keras.regularizers.l1_l2(**weight_decay),
-                name="exp{0}_l{1}".format(expert_idx, layer_idx),
+                name=f"exp{0}_l{1}".format(expert_idx, layer_idx),
             )
             bn = tf.keras.layers.BatchNormalization(
-                name="exp{0}_bn{1}".format(expert_idx, layer_idx)
+                name=f"exp{0}_bn{1}".format(expert_idx, layer_idx)
             )
             drop = tf.keras.layers.Dropout(
                 rate=dropout_rates["hidden"],
-                name="exp{0}_drop{1}".format(expert_idx, layer_idx),
+                name=f"exp{0}_drop{1}".format(expert_idx, layer_idx),
             )
-            setattr(self, "exp{0}_l{1}".format(expert_idx, layer_idx), l)
-            setattr(self, "exp{0}_bn{1}".format(expert_idx, layer_idx), bn)
-            setattr(self, "exp{0}_drop{1}".format(expert_idx, layer_idx), drop)
+            setattr(self, f"exp{0}_l{1}".format(expert_idx, layer_idx), l)
+            setattr(self, f"exp{0}_bn{1}".format(expert_idx, layer_idx), bn)
+            setattr(self, f"exp{0}_drop{1}".format(expert_idx, layer_idx), drop)
 
         self.out = tf.keras.layers.Dense(
             units=output_dim,
             activation=None,
             kernel_regularizer=tf.keras.regularizers.l1_l2(**weight_decay),
-            name="exp{0}_output".format(expert_idx),
+            name=f"exp{0}_output".format(expert_idx),
         )
 
     @tf.function(experimental_relax_shapes=True)
@@ -159,9 +159,9 @@ class Expert(tf.keras.Model):
         x = self.input_drop(x, training=training)
 
         for layer_idx, _ in enumerate(self.architecture):
-            l = getattr(self, "exp{0}_l{1}".format(self.expert_idx, layer_idx))
-            bn = getattr(self, "exp{0}_bn{1}".format(self.expert_idx, layer_idx))
-            drop = getattr(self, "exp{0}_drop{1}".format(self.expert_idx, layer_idx))
+            l = getattr(self, f"exp{0}_l{1}".format(self.expert_idx, layer_idx))
+            bn = getattr(self, f"exp{0}_bn{1}".format(self.expert_idx, layer_idx))
+            drop = getattr(self, f"exp{0}_drop{1}".format(self.expert_idx, layer_idx))
             x = l(x)
             x = bn(x, training=training)
             x = tf.nn.relu(x)
@@ -241,9 +241,9 @@ class ExNet(tf.keras.Model):
                 dropout_rates=dropout_rates,
                 weight_decay=weight_decay,
                 expert_idx=expert_idx,
-                name="exp{0}".format(expert_idx),
+                name=f"exp{0}".format(expert_idx),
             )
-            setattr(self, "exp{0}".format(expert_idx), exp)
+            setattr(self, f"exp{0}".format(expert_idx), exp)
 
     def fake_call(self):
         # To be able to save & load easily, we require a 'build' function that sets all
@@ -473,8 +473,8 @@ class ExNet(tf.keras.Model):
             epoch_duration = time.time() - epoch_duration
 
             print(
-                "Epoch {0}/{1} | {2:.2f}s | (train) loss: {3:.5f} - out loss: {4:.5f} -"
-                " spec loss: {5:.5f} - entropy loss: {6:.5f}".format(
+                f"Epoch {0}/{1} | {2:.2f}s | (train) loss: {3:.5f} - out loss: {4:.5f} -"
+                f" spec loss: {5:.5f} - entropy loss: {6:.5f}".format(
                     epoch + 1,
                     n_epochs,
                     epoch_duration,
@@ -485,8 +485,8 @@ class ExNet(tf.keras.Model):
                 )
             )
             print(
-                "(val) loss: {0:.5f} - out loss: {1:.5f} - spec loss: {2:.5f} - entropy"
-                " loss: {3:.5f}".format(
+                f"(val) loss: {0:.5f} - out loss: {1:.5f} - spec loss: {2:.5f} - entropy"
+                f" loss: {3:.5f}".format(
                     val_loss, val_output_loss, val_spec_loss, val_entropy_loss
                 )
             )
@@ -494,7 +494,7 @@ class ExNet(tf.keras.Model):
             # ===== Early stopping =====
             if val_loss < best_val_loss:
                 print(
-                    "Best val loss beaten, from {0:.5f} to {1:.5f}. Saving model.\n".format(
+                    f"Best val loss beaten, from {0:.5f} to {1:.5f}. Saving model.\n".format(
                         best_val_loss, val_loss
                     )
                 )
@@ -505,15 +505,15 @@ class ExNet(tf.keras.Model):
                 counter += 1
                 if counter == patience:
                     print(
-                        "{0} epochs performed without improvement. Stopping training.\n".format(
+                        f"{0} epochs performed without improvement. Stopping training.\n".format(
                             patience
                         )
                     )
                     break
                 else:
                     print(
-                        "{0}/{1} epochs performed without improvement. Best val loss:"
-                        " {2:.5f}\n".format(counter, patience, best_val_loss)
+                        f"{0}/{1} epochs performed without improvement. Best val loss:"
+                        f" {2:.5f}\n".format(counter, patience, best_val_loss)
                     )
 
         # Loading best weights.
@@ -556,7 +556,7 @@ class ExNet(tf.keras.Model):
 
         if print_stats:
             print(
-                "\nExpert frequency (rounded - may not exactly sum to 100%): {0}".format(
+                f"\nExpert frequency (rounded - may not exactly sum to 100%): {0}".format(
                     class_frequency
                 )
             )
@@ -567,8 +567,8 @@ class ExNet(tf.keras.Model):
                 # Only show 'relevant' experts.
                 if mean_probas[i] > 0.01:
                     print(
-                        "Expert {0} - mean proba {1:.2f}, n_allocated {2:d},"
-                        " mean_allocated: {3:.2f}".format(
+                        f"Expert {0} - mean proba {1:.2f}, n_allocated {2:d},"
+                        f" mean_allocated: {3:.2f}".format(
                             i,
                             100 * mean_probas[i],
                             count_per_expert[i],
