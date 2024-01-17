@@ -90,7 +90,7 @@ model = natixis.deep_model.ExNet(
     spec_weight=SPEC_WEIGHT,
     entropy_weight=ENTROPY_WEIGHT,
     gamma=GAMMA,
-    name=f"exnet",
+    name="exnet",
 )
 model.fit(
     train_data=train_data_,

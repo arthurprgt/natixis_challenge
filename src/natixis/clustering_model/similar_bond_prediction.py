@@ -7,6 +7,15 @@ from sklearn.preprocessing import StandardScaler
 
 
 def complete_nan_values(df):
+    """Completes the NaN values in the given DataFrame by filling them with the mean values
+    based on the classification and year of the deal date.
+
+    Args:
+        df (DataFrame): The input DataFrame containing the bond data.
+
+    Returns:
+        DataFrame: The DataFrame with the NaN values filled.
+    """
     df_unique_isin = df.groupby("ISIN").first()
     columns = [
         "Classification",
@@ -71,6 +80,16 @@ def complete_nan_values(df):
 
 
 def preprocess_clustering(df, cols_to_exclude):
+    """
+    Preprocesses the input DataFrame for clustering.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+        cols_to_exclude (list): List of columns to exclude from the preprocessing.
+
+    Returns:
+        pd.DataFrame: The preprocessed DataFrame.
+    """
     # Drop the columns that we exclude
     df = df.drop(cols_to_exclude, axis=1, errors="ignore")
 
@@ -253,6 +272,18 @@ df_normalized = scaler.fit_transform(df_normalized)
 
 # Calculate distances and output 5 recommended bonds
 def get_nearest_rows_with_proximity_scores(isin_string, n_reco=5):
+    """
+    Returns the nearest rows to a given ISIN string along with their proximity scores.
+
+    Parameters:
+        isin_string (str): The ISIN string to find nearest rows for.
+        n_reco (int): The number of nearest rows to retrieve (default is 5).
+
+    Returns:
+        nearest_rows (pandas.Series): The ISIN values of the nearest rows.
+        proximity_scores (numpy.ndarray): The proximity scores of the nearest rows.
+    """
+
     # Find the index of the given ISIN string in df_original
     index = df_clustering_filled[df_clustering_filled["ISIN_"] == isin_string].index[0]
 
