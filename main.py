@@ -1,3 +1,5 @@
+"""Train the model and export it"""
+
 import numpy as np
 import pandas as pd
 import yaml
@@ -8,7 +10,7 @@ import natixis
 
 SEED = 0
 
-with open("config/config.yml", "r") as f:
+with open("config/config.yml", "r", encoding="utf-8") as f:
     config = yaml.safe_load(f)
 
 # Build params
