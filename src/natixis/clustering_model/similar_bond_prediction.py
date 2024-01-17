@@ -1,3 +1,5 @@
+"""Implement the similar bond prediction model."""
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances

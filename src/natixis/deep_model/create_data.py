@@ -1,3 +1,6 @@
+""" This script preprocesses the data and creates the
+training dataset for the deep learning model. """
+
 import random
 
 import numpy as np

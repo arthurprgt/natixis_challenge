@@ -1,3 +1,5 @@
+""" Implementation of the ExNet model. """
+
 import time
 
 import matplotlib.pyplot as plt
