@@ -1,5 +1,4 @@
 from sklearn.metrics import average_precision_score
-import tensorflow as tf
 import natixis
 import pandas as pd
 import numpy as np
