@@ -52,7 +52,7 @@ model = ExNet(
     spec_weight=SPEC_WEIGHT,
     entropy_weight=ENTROPY_WEIGHT,
     gamma=GAMMA,
-    name=f"exnet",
+    name="exnet",
 )
 
 model.fake_call()
