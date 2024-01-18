@@ -1,3 +1,5 @@
+"""Create utils for the project"""
+
 import logging
 
 # Configure logger

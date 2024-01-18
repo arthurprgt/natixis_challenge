@@ -1,26 +1,28 @@
+""" Prediction module for the ExNet model. """
+
 import numpy as np
 import pandas as pd
 
 from .exnet import ExNet
 
 # Build params
-seed = 0
-n_experts = 5
-spec_weight = 7.7e-4
-entropy_weight = 4.2e-2
-expert_architecture = [32, 32]
-embedding_size = 32
-dropout_rates = {"input": 0.1, "hidden": 0.5}
-weight_decay = {"l1": 0.0, "l2": 0.0}
-gamma = 2.5
+SEED = 0
+N_EXPERTS = 5
+SPEC_WEIGHT = 7.7e-4
+ENTROPY_WEIGHT = 4.2e-2
+EXPERT_ARCHITECTURE = [32, 32]
+EMBEDDING_SIZE = 32
+DROPOUT_RATES = {"input": 0.1, "hidden": 0.5}
+WEIGHT_DECAY = {"l1": 0.0, "l2": 0.0}
+GAMMA = 2.5
 
 # Fit params
-n_epochs = 400
-patience = 20
-batch_size = 1024
-learning_rate = 7.8e-4
-optimizer = "nadam"
-lookahead = True
+N_EPOCHS = 400
+PATIENCE = 20
+BATCH_SIZE = 1024
+LEARNING_RATE = 7.8e-4
+OPTIMIZER = "nadam"
+LOOKAHEAD = True
 
 # ===== Preparing data =====
 data = pd.read_csv("data/new_dataset.csv")
@@ -41,16 +43,16 @@ features = list(data.columns[4:-1])
 model = ExNet(
     n_feats=len(features),
     output_dim=3,
-    n_experts=n_experts,
-    expert_architecture=expert_architecture,
+    n_experts=N_EXPERTS,
+    expert_architecture=EXPERT_ARCHITECTURE,
     n_investors=n_investors,
-    embedding_size=embedding_size,
-    dropout_rates=dropout_rates,
+    embedding_size=EMBEDDING_SIZE,
+    dropout_rates=DROPOUT_RATES,
     weight_decay={"l1": 0.0, "l2": 0.0},
-    spec_weight=spec_weight,
-    entropy_weight=entropy_weight,
-    gamma=gamma,
-    name=f"exnet",
+    spec_weight=SPEC_WEIGHT,
+    entropy_weight=ENTROPY_WEIGHT,
+    gamma=GAMMA,
+    name="exnet",
 )
 
 model.fake_call()
@@ -59,6 +61,21 @@ model.load_weights("models/exnet_big.h5")
 
 # ===== Prediction on given data =====
 def predict(isin, b_side, n_clients=5, size=None):
+    """
+    Predicts the top clients recommendation for a given ISIN and buyer/seller side.
+
+    Parameters:
+    - isin (str): The ISIN of the security.
+    - b_side (str): The side of the client (Buyer or Seller).
+    - n_clients (int): The number of top clients to recommend (default: 5).
+    - size (int): The size of the security (default: None).
+
+    Returns:
+    - top_clients (list): The list of top clients recommended.
+    - probabilities (ndarray): The probabilities associated with the top clients.
+    - viz_df (DataFrame): The visualization dataframe containing relevant data.
+
+    """
     # Get features
     infos = data.loc[data["ISIN"] == isin].iloc[-1]
     # Change size info

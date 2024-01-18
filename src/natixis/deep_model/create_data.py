@@ -1,3 +1,6 @@
+""" This script preprocesses the data and creates the
+training dataset for the deep learning model. """
+
 import random
 
 import numpy as np
@@ -108,6 +111,17 @@ def preprocess_dataframe(df):
 
 
 def encode_dataframe(df):
+    """
+    Encodes the given dataframe by performing various data transformations and feature engineering.
+
+    Args:
+        df (pandas.DataFrame): The input dataframe to be encoded.
+
+    Returns:
+        pandas.DataFrame: The encoded dataframe with transformed features.
+
+    """
+
     # Ordinal encoding for 'Rating_Fitch'
     rating_mapping = {
         "AAA": 22,

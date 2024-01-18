@@ -1,3 +1,5 @@
+"""Run the Streamlit application."""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
@@ -14,10 +16,11 @@ def main():
     """
     The main function that runs the Streamlit application.
 
-    This function is responsible for setting up the Streamlit application and defining the app's behavior.
+    This function is responsible for setting up the Streamlit application
+    and defining the app's behavior.
     """
     # Set CSS
-    with open("app/assets/theme.css") as f:
+    with open("app/assets/theme.css", encoding="utf-8") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
     # Set sidebar
