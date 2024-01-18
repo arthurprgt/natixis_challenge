@@ -504,7 +504,8 @@ class ExNet(keras.Model):
             batch_size: The batch size for training (default: 32).
             optimizer: The optimizer to use for training (default: "nadam").
             learning_rate: The learning rate for the optimizer (default: 1e-3).
-            patience: The number of epochs to wait for improvement in validation loss before early stopping (default: 10).
+            patience: The number of epochs to wait for improvement in validation
+            loss before early stopping (default: 10).
             lookahead: Whether to use Lookahead optimizer (default: True).
             save_path: The path to save the trained model weights (default: "").
             seed: The random seed for reproducibility (default: 0).
@@ -743,9 +744,12 @@ class ExNet(keras.Model):
         Plots the distribution of experts for all investors.
 
         Returns:
-            reorder_probas (pd.DataFrame): DataFrame containing the reordered probabilities of expert attribution.
-            count_per_expert (pd.DataFrame): DataFrame containing the count of experts for each expert index.
-            unattributed_experts (list): List of expert indices that are not attributed to any investor.
+            reorder_probas (pd.DataFrame): DataFrame containing the
+            reordered probabilities of expert attribution.
+            count_per_expert (pd.DataFrame): DataFrame containing the
+            count of experts for each expert index.
+            unattributed_experts (list): List of expert indices that
+            are not attributed to any investor.
         """
         probas = self.gating(tf.range(self.gating.n_investors)).numpy()
         classes = np.argmax(probas, axis=1)
