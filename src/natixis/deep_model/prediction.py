@@ -2,32 +2,27 @@
 
 import numpy as np
 import pandas as pd
-import yaml
 
 from .exnet import ExNet
 
-SEED = 0
-
-with open("config/config.yml", "r", encoding="utf-8") as f:
-    config = yaml.safe_load(f)
-
 # Build params
-N_EXPERTS = config["n_experts"]
-SPEC_WEIGHT = config["spec_weight"]
-ENTROPY_WEIGHT = config["entropy_weight"]
-EXPERT_ARCHITECTURE = config["expert_architecture"]
-EMBEDDING_SIZE = config["embedding_size"]
-DROPOUT_RATES = config["dropout_rates"]
-WEIGHT_DECAY = config["weight_decay"]
-GAMMA = config["gamma"]
+SEED = 0
+N_EXPERTS = 5
+SPEC_WEIGHT = 7.7e-4
+ENTROPY_WEIGHT = 4.2e-2
+EXPERT_ARCHITECTURE = [32, 32]
+EMBEDDING_SIZE = 32
+DROPOUT_RATES = {"input": 0.1, "hidden": 0.5}
+WEIGHT_DECAY = {"l1": 0.0, "l2": 0.0}
+GAMMA = 2.5
 
 # Fit params
-N_EPOCHS = config["n_epochs"]
-PATIENCE = config["patience"]
-BATCH_SIZE = config["batch_size"]
-LEARNING_RATE = config["learning_rate"]
-OPTIMIZER = config["optimizer"]
-LOOKAHEAD = config["lookahead"]
+N_EPOCHS = 400
+PATIENCE = 20
+BATCH_SIZE = 1024
+LEARNING_RATE = 7.8e-4
+OPTIMIZER = "nadam"
+LOOKAHEAD = True
 
 # ===== Preparing data =====
 data = pd.read_csv("data/new_dataset.csv")
@@ -66,6 +61,21 @@ model.load_weights("models/exnet_big.h5")
 
 # ===== Prediction on given data =====
 def predict(isin, b_side, n_clients=5, size=None):
+    """
+    Predicts the top clients recommendation for a given ISIN and buyer/seller side.
+
+    Parameters:
+    - isin (str): The ISIN of the security.
+    - b_side (str): The side of the client (Buyer or Seller).
+    - n_clients (int): The number of top clients to recommend (default: 5).
+    - size (int): The size of the security (default: None).
+
+    Returns:
+    - top_clients (list): The list of top clients recommended.
+    - probabilities (ndarray): The probabilities associated with the top clients.
+    - viz_df (DataFrame): The visualization dataframe containing relevant data.
+
+    """
     # Get features
     infos = data.loc[data["ISIN"] == isin].iloc[-1]
     # Change size info
